@@ -6,14 +6,16 @@ import re
 import io
 from PyPDF2 import PdfReader
 from tqdm import tqdm
-
+from data_processor import Processor
+from collections import deque
 
 class TorontoScraper:
-    def __init__(self, url):
-        self.url = url
+    def __init__(self, path_focus):
+        self.url = None
         self.visited = set()
-        self.to_visit = [url]
+        self.to_visit = deque()
         self.data = []
+        self.path_focus = path_focus
 
     def get_domain(self, url):
         return urlparse(url).netloc
@@ -22,19 +24,15 @@ class TorontoScraper:
         return urlparse(url).path
 
     def is_valid_url(self, url):
-        path = self.get_path(url).lower()
+        path:str = self.get_path(url).lower()
+        url:str = url.lower()
         return (
-            'city-government' in path
-            and any(keyword in path for keyword in [
-                'data-research-maps',
-                'planning-development',
-                'public-notices-bylaws',
-                'research-reports'
-            ])
-            and not any(keyword in url for keyword in [
-                'profile', 'about', 'sidebar', 'home', 'account', 'login',
+            'city-government' in path and \
+            any(keyword in path for keyword in self.path_focus) and \
+            all(keyword not in url for keyword in [
+                'profile', 'about', 'account', 'login',
                 'newsletter', 'subscribe', 'register', 'weather', 'sports',
-                'globalnav', 'header', 'footer', 'services-payments', 'explore-enjoy', 'open-data'
+                'globalnav', 'header', 'footer', 'services-payments', 'explore-enjoy',
             ])
         )
 
@@ -50,11 +48,13 @@ class TorontoScraper:
     #         text += page.extract_text() + "\n"
     #     return text
 
-    def crawl_website_toronto(self, max_pages=500, delay=1):
-        domain = self.get_domain(self.url)
+    def crawl_website_toronto(self, url, max_pages=500, delay=1, max_text_length=6000):
+        self.url = url
+        domain = self.get_domain(url)
+        self.to_visit = deque([url])   
         
         while self.to_visit and len(self.visited) < max_pages:
-            url = self.to_visit.pop(0)
+            url = self.to_visit.pop()
             if url in self.visited:
                 continue
 
@@ -76,7 +76,13 @@ class TorontoScraper:
                 soup = BeautifulSoup(response.text, 'html.parser')
 
                 text = " ".join([p.get_text() for p in soup.find_all('p')])
-
+                text += " ".join([span.get_text() for span in soup.find_all('span')])
+                text += " ".join([li.get_text() for li in soup.find_all('li')])
+                text += " ".join([h1.get_text() for h1 in soup.find_all('h1')])
+                text += " ".join([h2.get_text() for h2 in soup.find_all('h2')])
+                text += " ".join([h3.get_text() for h3 in soup.find_all('h3')])
+                text += " ".join([div.get_text() for div in soup.find_all('div')])
+                text = text[:max_text_length] if len(text) > max_text_length else text
                 self.data.append({
                     "url": url,
                     "title": soup.title.string if soup.title else " ",
@@ -87,14 +93,26 @@ class TorontoScraper:
 
                 for link in soup.find_all('a', href=True):
                     next_url = urljoin(url, link['href'])
-                    if self.get_domain(next_url) == domain and (self.is_valid_url(next_url) or not self.is_document(next_url)):
-                        self.to_visit.append(next_url)
+                    if self.get_domain(next_url) == domain and self.is_valid_url(next_url) and not self.is_document(next_url):
+                        if next_url not in self.visited and next_url not in self.to_visit:
+                            self.to_visit.append(next_url)
                 print(f"Crawled {url}")
 
-                for ul in soup.find_all('ul', class_='nav'):
+                for div in soup.find_all('div'):
+                    for link in div.find_all('a', href=True):
+                        next_url = urljoin(url, link['href'])
+                        if self.get_domain(next_url) == domain and next_url not in self.visited and next_url not in self.to_visit and self.is_valid_url(next_url):
+                            self.to_visit.append(next_url)
+
+                for ul in soup.find_all('ul'):
                     for link in ul.find_all('a', href=True):
                         next_url = urljoin(url, link['href'])
-                        if self.get_domain(next_url) == domain and next_url not in self.visited and next_url not in self.to_visit:
+                        if self.get_domain(next_url) == domain and next_url not in self.visited and next_url not in self.to_visit and self.is_valid_url(next_url):
+                            self.to_visit.append(next_url)
+                for ol in soup.find_all('ol'):
+                    for link in ol.find_all('a', href=True):
+                        next_url = urljoin(url, link['href'])
+                        if self.get_domain(next_url) == domain and next_url not in self.visited and next_url not in self.to_visit and self.is_valid_url(next_url):
                             self.to_visit.append(next_url)
             except requests.RequestException as e:
                 print(f"Failed to retrieve {url}: {e}")
@@ -104,10 +122,17 @@ class TorontoScraper:
         return self.data
 
 # urls = [
-#     "https://www.toronto.ca/city-government/data-research-maps/research-reports/housing-and-homelessness-research-and-reports/shelter-system-flow-data/"
+#     "https://www.toronto.ca/city-government/data-research-maps/research-reports/housing-and-homelessness-research-and-reports/shelter-system-flow-data/",
+ 
 # ]
 
-# scraper = TorontoScraper(urls[0])
+# scraper = TorontoScraper(["data-research-maps", "homelessness", "shelter"])
+# processor = Processor()
 # for url in urls:
-#     data = scraper.crawl_website_toronto(100)
-#     print(data)
+#     data = scraper.crawl_website_toronto(url, max_pages=1)
+#     processed_data = processor.process_data_website(data)
+#     for i in processed_data:
+#         print(i['locations'])
+#         print(i['coordinates'])
+#         print(i['body'])
+#         print('---')

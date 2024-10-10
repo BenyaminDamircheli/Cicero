@@ -11,19 +11,18 @@ from toronto_scraper import TorontoScraper
 def main():
     processor = Processor()
     census_scraper = TorontoScraper("https://www.toronto.ca/city-government/data-research-maps/")
-    # reddit_scraper = RedditScraper("toRANTo", 10)
-    # reddit_scraper2 = RedditScraper("askTO", 1500)
+    reddit_scraper = RedditScraper("toRANTo", 10)
+    reddit_scraper2 = RedditScraper("askTO", 1500)
 
     try:
-        # Scrape data
-        # reddit_data = reddit_scraper.scrape_reddit()
-        # reddit_data2 = reddit_scraper2.scrape_reddit()
+        reddit_data = reddit_scraper.scrape_reddit()
+        reddit_data2 = reddit_scraper2.scrape_reddit()
         crawl_data = census_scraper.crawl_website_toronto(10)
 
-        # processed_reddit_data = processor.process_data_reddit(reddit_data)
-        # processed_reddit_data2 = processor.process_data_reddit(reddit_data2)
+        processed_reddit_data = processor.process_data_reddit(reddit_data)
+        processed_reddit_data2 = processor.process_data_reddit(reddit_data2)
         processed_website_data = processor.process_data_website(crawl_data)
-        all_processed_data = processed_website_data
+        all_processed_data = processed_reddit_data + processed_reddit_data2 + processed_website_data
 
         print(f"Processed and saved {len(all_processed_data)} items.")
 

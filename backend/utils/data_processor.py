@@ -56,7 +56,7 @@ class Processor:
         self.Base.metadata.create_all(bind=self.engine)
 
         self.nlp_reddit = spacy.load("en_core_web_trf")
-        self.nlp_website = spacy.load("en_core_web_md")
+        self.nlp_website = spacy.load("en_core_web_sm")
 
         nltk.download('vader_lexicon')
         nltk.download('stopwords')

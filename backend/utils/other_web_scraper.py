@@ -12,7 +12,7 @@ class OtherWebScraper:
     def __init__(self, url):
         self.url = url
         self.visited = set()
-        self.to_visit = []
+        self.to_visit = [url]
         self.data = []
 
     def get_domain(self, url):
@@ -50,7 +50,7 @@ class OtherWebScraper:
                     main_content = soup.find('main') or soup.find('div', class_='content') or soup.find('article')
 
                     if main_content:
-                        text = " ".join([p.text for p in main_content.find_all('p')])
+                        text = " ".join([p.text for p in main_content.find_all('p', 'h1', 'h2', 'h3', 'div', 'span', 'li', 'a')])
 
                         self.data.append({
                             "url": url,
@@ -76,11 +76,13 @@ class OtherWebScraper:
 
         return self.data
 
-# urls = [
-#     "https://thelocal.to/issues/"
-# ]
-# scraper = OtherWebScraper(urls[0])
-# for url in urls:
-#     scraper.url = url
-#     data = scraper.crawl_website_other(100)
-#     print(data)
+urls = [
+    "https://www.toronto.ca/city-government/data-research-maps/research-reports/housing-and-homelessness-research-and-reports/"
+]
+scraper = OtherWebScraper(urls[0])
+data = scraper.crawl_website_other(max_pages=1000)
+for i in data:
+    print(i['url'])
+    print(i['title'])
+    print(i['body'])
+    print('---')
