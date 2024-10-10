@@ -6,29 +6,27 @@ from scraper import crawl_website
 
 
 
+
 def main():
     try:
         # Scrape data
-        reddit_data = scrape_reddit("toRANTo", 100)
-        scraped_data = crawl_website("https://www.toronto.ca/city-government/data-research-maps/", 100)
+        reddit_data = scrape_reddit("toRANTo", 2000)
+        reddit_data2 = scrape_reddit("askTO", 2000)
+        crawl_data = crawl_website("https://www.toronto.ca/city-government/", 500)
         
-        all_data = reddit_data + scraped_data
+        all_data = reddit_data + reddit_data2 + crawl_data
         # Process and save data
         processed_data = process_and_save_data(all_data)
-
-        
 
         print(f"Processed and saved {len(all_data)} items.")
 
         # Retrieve complaints
         complaints = get_complaints()
 
-        print("Processed Complaints:")
-        
+        print("Processed Complaints: " + str(len(complaints)))
 
-        if len(complaints) > 10:
-            print(f"... and {len(complaints) - 10} more")
-
+    except ValueError as ve:
+        print(f"A value error occurred: {str(ve)}")
     except Exception as e:
         print(f"An error occurred: {str(e)}")
 
