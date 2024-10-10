@@ -41,7 +41,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 class Complaint(Base):
-    __tablename__ = "complaints"
+    __tablename__ = "complaints1"
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String)
@@ -51,14 +51,15 @@ class Complaint(Base):
     is_complaint = Column(Boolean)
     locations = Column(ARRAY(String))
     coordinates = Column(ARRAY(Float))
-    summary = Column(String)
     topics = Column(ARRAY(Float))
     group = Column(Integer)
 
 Base.metadata.create_all(bind=engine)
 
 # NLP setup
-nlp = spacy.load("en_core_web_trf")
+nlp_reddit = spacy.load("en_core_web_trf")
+nlp_website = spacy.load("en_core_web_md")
+
 nltk.download('vader_lexicon')
 nltk.download('stopwords')
 nltk.download('punkt')
@@ -82,12 +83,7 @@ def preprocess_text(text):
     tokens = word_tokenize(text)
     return [token for token in tokens if token.isalnum() and token not in stopwords]
 
-def summarize_text(text, sentences_count=4):
-    parser = PlaintextParser.from_string(text, Tokenizer("english"))
-    summary = summarizer(parser.document, sentences_count)
-    return " ".join([str(sentence) for sentence in summary])
-
-def process_text(text):
+def process_text(text, nlp):
     if not isinstance(text, str):
         text = str(text)  
 
@@ -98,7 +94,6 @@ def process_text(text):
     
     locations = [ent.text for ent in doc.ents if ent.label_ in ["LOC", "FAC"] and ent.text.lower() != "toronto" and ent.text.lower() != "ontario" and ent.text.lower() != "canada"]
     embeddings = sentence_model.encode(text)
-    summary = summarize_text(text)
     
     coordinates = [get_coordinates(loc) for loc in locations]
     coordinates = [coord for coord in coordinates if coord is not None]
@@ -108,10 +103,8 @@ def process_text(text):
         'sentiment': sentiment,
         'locations': locations,
         'coordinates': coordinates,
-        'summary': summary,
         'embeddings': embeddings
     }
-
 
 def group_complaints(processed_data, similarity_threshold=0.67):
     groups = []
@@ -136,51 +129,95 @@ def group_complaints(processed_data, similarity_threshold=0.67):
     
     return [item for group in groups for item in group]
 
-def process_and_save_data(data):
+
+
+def process_data_website(data):
     processed_data = []
-    db = SessionLocal()
     try:
         for item in tqdm(data, desc="Processing data"):
-            full_text = f"{item['title']} {item['body']}"
-            analysis = process_text(full_text)
-            
-            processed_item = {
-                'title': item['title'],
-                'body': item['body'],
-                'url': item['url'],
-                'created_at': item['created'],
-                'is_complaint': analysis['is_complaint'],
-                'sentiment': analysis['sentiment'],
-                'locations': analysis['locations'],
-                'coordinates': analysis['coordinates'],
-                'summary': analysis['summary'],
-                'embeddings': analysis['embeddings']
-            }
-            processed_data.append(processed_item)
+            try:
+                full_text = f"{item['title']} {item['body']}"
+                analysis = process_text(full_text, nlp_website)
+                
+                processed_item = {
+                    'title': item['title'],
+                    'body': item['body'],
+                    'url': item['url'],
+                    'created_at': item['created'],
+                    'is_complaint': analysis['is_complaint'],
+                    'sentiment': analysis['sentiment'],
+                    'locations': analysis['locations'],
+                    'coordinates': analysis['coordinates'],
+                    'embeddings': analysis['embeddings']
+                }
+                processed_data.append(processed_item)
+            except Exception as e:
+                print(f"Error processing item: {e}")
+                print(f"Problematic item: {item}")
         
-        # Group complaints
-        grouped_data = group_complaints(processed_data)
+        return processed_data
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+
+def process_data_reddit(data):
+    processed_data = []
+    try:
+        for item in tqdm(data, desc="Processing data"):
+            try:
+                full_text = f"{item['title']} {item['body']}"
+                analysis = process_text(full_text, nlp_reddit)
+                
+                processed_item = {
+                    'title': item['title'],
+                    'body': item['body'],
+                    'url': item['url'],
+                    'created_at': item['created'],
+                    'is_complaint': analysis['is_complaint'],
+                    'sentiment': analysis['sentiment'],
+                    'locations': analysis['locations'],
+                    'coordinates': analysis['coordinates'],
+                    'embeddings': analysis['embeddings']
+                }
+                processed_data.append(processed_item)
+            except Exception as e:
+                print(f"Error processing item: {e}")
+                print(f"Problematic item: {item}")
         
+        return processed_data
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+def save_data(data):
+    db = SessionLocal()
+    # Group complaints
+    grouped_data = group_complaints(data)
+    
+    try:
         for item in tqdm(grouped_data, desc="Saving data"):
-            complaint = Complaint(
-                title=item['title'],
-                body=item['body'],
-                url=item['url'],
-                created_at=item['created_at'],
-                is_complaint=item['is_complaint'],
-                locations=item['locations'],
-                coordinates=item['coordinates'],
-                summary=item['summary'],
-                topics=item['embeddings'].tolist(),  # Store embeddings as topics
-                group=item['group']
-            )
-            db.add(complaint)
+            try:
+                complaint = Complaint(
+                    title=item['title'],
+                    body=item['body'],
+                    url=item['url'],
+                    created_at=item['created_at'],
+                    is_complaint=item['is_complaint'],
+                    locations=item['locations'],
+                    coordinates=item['coordinates'],
+                    topics=item['embeddings'].tolist(),  
+                    group=item['group']
+                )
+                db.add(complaint)
+            except Exception as e:
+                print(f"Error saving item: {e}")
+                print(f"Problematic item: {item}")
         db.commit()
+    except Exception as e:
+        print(f"An error occurred: {e}")
     finally:
         db.close()
     
     return grouped_data
-
 def get_complaints():
     db = SessionLocal()
     try:

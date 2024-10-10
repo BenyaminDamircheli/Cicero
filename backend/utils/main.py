@@ -1,8 +1,8 @@
 import os
 from dotenv import load_dotenv
-from data_processor import process_and_save_data, get_complaints, process_text
+from data_processor import process_data_reddit, process_data_website, get_complaints, save_data
 from reddit_scraper import scrape_reddit
-from scraper import crawl_website
+from toronto_scraper import crawl_website_toronto
 
 
 
@@ -10,17 +10,19 @@ from scraper import crawl_website
 def main():
     try:
         # Scrape data
-        reddit_data = scrape_reddit("toRANTo", 2000)
-        reddit_data2 = scrape_reddit("askTO", 2000)
-        crawl_data = crawl_website("https://www.toronto.ca/city-government/", 500)
+        reddit_data = scrape_reddit("toRANTo", 10)
+        reddit_data2 = scrape_reddit("askTO", 1500)
+        crawl_data = crawl_website_toronto("https://www.toronto.ca/city-government/data-research-maps/", 200)
+
+        processed_reddit_data = process_data_reddit(reddit_data)
+        processed_reddit_data2 = process_data_reddit(reddit_data2)
+        processed_website_data = process_data_website(crawl_data)
+        all_processed_data = processed_reddit_data + processed_reddit_data2 + processed_website_data
+
+        print(f"Processed and saved {len(all_processed_data)} items.")
+
+        save_data(all_processed_data)
         
-        all_data = reddit_data + reddit_data2 + crawl_data
-        # Process and save data
-        processed_data = process_and_save_data(all_data)
-
-        print(f"Processed and saved {len(all_data)} items.")
-
-        # Retrieve complaints
         complaints = get_complaints()
 
         print("Processed Complaints: " + str(len(complaints)))
