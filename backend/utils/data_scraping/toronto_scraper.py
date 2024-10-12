@@ -29,11 +29,7 @@ class TorontoScraper:
         return (
             'city-government' in path and \
             any(keyword in path for keyword in self.path_focus) and \
-            all(keyword not in url for keyword in [
-                'profile', 'about', 'account', 'login',
-                'newsletter', 'subscribe', 'register', 'weather', 'sports',
-                'globalnav', 'header', 'footer', 'services-payments', 'explore-enjoy',
-            ])
+            not any(keyword in url for keyword in ['ward-profiles'])
         )
 
     def is_document(self, url):
@@ -76,12 +72,10 @@ class TorontoScraper:
                 soup = BeautifulSoup(response.text, 'html.parser')
 
                 text = " ".join([p.get_text() for p in soup.find_all('p')])
-                text += " ".join([span.get_text() for span in soup.find_all('span')])
                 text += " ".join([li.get_text() for li in soup.find_all('li')])
                 text += " ".join([h1.get_text() for h1 in soup.find_all('h1')])
-                text += " ".join([h2.get_text() for h2 in soup.find_all('h2')])
-                text += " ".join([h3.get_text() for h3 in soup.find_all('h3')])
                 text += " ".join([div.get_text() for div in soup.find_all('div')])
+                
                 text = text[:max_text_length] if len(text) > max_text_length else text
                 self.data.append({
                     "url": url,
@@ -109,6 +103,7 @@ class TorontoScraper:
                         next_url = urljoin(url, link['href'])
                         if self.get_domain(next_url) == domain and next_url not in self.visited and next_url not in self.to_visit and self.is_valid_url(next_url):
                             self.to_visit.append(next_url)
+                            
                 for ol in soup.find_all('ol'):
                     for link in ol.find_all('a', href=True):
                         next_url = urljoin(url, link['href'])
@@ -122,14 +117,14 @@ class TorontoScraper:
         return self.data
 
 # urls = [
-#     "https://www.toronto.ca/city-government/data-research-maps/research-reports/housing-and-homelessness-research-and-reports/shelter-system-flow-data/",
+#     "https://www.toronto.ca/city-government/data-research-maps/research-reports",
  
 # ]
 
-# scraper = TorontoScraper(["data-research-maps", "homelessness", "shelter"])
+# scraper = TorontoScraper(["data-research-maps"])
 # processor = Processor()
 # for url in urls:
-#     data = scraper.crawl_website_toronto(url, max_pages=1)
+#     data = scraper.crawl_website_toronto(url, max_pages=500)
 #     processed_data = processor.process_data_website(data)
 #     for i in processed_data:
 #         print(i['locations'])

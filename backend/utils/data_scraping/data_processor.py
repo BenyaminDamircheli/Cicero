@@ -88,7 +88,7 @@ class Processor:
         doc = nlp(text)
         
         sentiment = self.sia.polarity_scores(text)
-        is_complaint = sentiment['compound'] < -0.05  # play with this a bit
+        is_complaint = sentiment['compound'] < 0.00  # play with this a bit
         
         locations = [ent.text for ent in doc.ents if ent.label_ in ["LOC", "FAC"] and ent.text.lower() not in ["toronto", "ontario", "canada"]]
         embeddings = self.sentence_model.encode(text)
@@ -104,7 +104,7 @@ class Processor:
             'embeddings': embeddings
         }
 
-    def group_complaints(self, processed_data, similarity_threshold=0.67):
+    def group_complaints(self, processed_data, similarity_threshold=0.69):
         groups = []
         
         for item in tqdm(processed_data, desc="Grouping complaints"):

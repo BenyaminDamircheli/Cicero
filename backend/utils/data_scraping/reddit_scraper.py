@@ -11,8 +11,9 @@ class RedditScraper:
         reddit = praw.Reddit(
         client_id = "9YcMFjtzVTx8rrSwogcrQA",
         client_secret = "Zq-HkQnwdBsO_ZB6nCPtZm2wjA-e_A",
-        user_agent = "webscraper"
+        user_agent = "city_complaints_scraper"
     )
+
 
         subreddit = reddit.subreddit(self.subreddit)
         posts = subreddit.new(limit = self.limit)
@@ -30,3 +31,5 @@ class RedditScraper:
             })
 
         return data
+
+
