@@ -1,4 +1,3 @@
-# Standard library imports
 import os
 from urllib.parse import quote_plus
 
