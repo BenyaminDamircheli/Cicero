@@ -2,7 +2,6 @@ import React from 'react'
 import { GroupedComplaint } from '../types';
 import { Info, Globe, BookOpen, Building2, Hammer } from 'lucide-react';
 import dynamic from 'next/dynamic';
-import SourcesSection from './sourcesSection';
 import SidebarSection from './sidebarSection';
 
 const RevolvingMap = dynamic(() => import('./revolvingMap'), { ssr: false });
@@ -35,11 +34,11 @@ const SidebarContent = ({ selectedComplaint }: SidebarContentProps) => {
       </section>
 
       <section className="mb-6">
-        <SidebarSection title='Urgency' icon={Globe} content="The combination of homelessness and poor sanitation poses an immediate risk to public health and safety, requiring swift intervention to address the living conditions of the homeless population and improve the cleanliness of public spaces." title="Urgency" icon={Info} />
+        <SidebarSection title='Urgency' icon={Info} content="The combination of homelessness and poor sanitation poses an immediate risk to public health and safety, requiring swift intervention to address the living conditions of the homeless population and improve the cleanliness of public spaces." />
       </section>
 
       <section className="mb-6">
-        <SidebarSection sources={selectedComplaint.sources} title="Sources" icon={BookOpen} />
+        <SidebarSection title="Sources" icon={BookOpen} sources={selectedComplaint.sources} />
       </section>
 
       <section className="mb-6">
