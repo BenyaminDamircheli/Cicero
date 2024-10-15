@@ -1,14 +1,21 @@
-import Image from "next/image";
+"use client";
+
 import dynamic from "next/dynamic";
+import Sidebar from "./components/sidebar/sidebar";
+import { useState } from "react";
+import { GroupedComplaint } from "./components/types";
 
 const MapComponent = dynamic(() => import("./components/map"), { ssr: false });
 
 export default function Home() {
+  const [selectedComplaint, setSelectedComplaint] = useState<GroupedComplaint | null>(null);
   return (
-    <div className="flex flex-col items-center justify-center h-screen">
-      <div className="flex flex-col items-center justify-center h-screen">
-        <h1 className="text-4xl font-bold">Complaints Map</h1>
-        <MapComponent />
+    <div className="flex h-screen bg-gray-100">
+      <div className="pt-[6px] pl-[6px] pb-[6px]">
+        <Sidebar selectedComplaint={selectedComplaint} />
+      </div>
+      <div className="flex-grow p-[6px]">
+          <MapComponent onMarkerSelect={setSelectedComplaint} />
       </div>
     </div>
   );

@@ -18,6 +18,7 @@ export const metadata: Metadata = {
   description: "Turning citizen complaints into actionable government proposals using LLM agents!",
 };
 
+
 export default function RootLayout({
   children,
 }: Readonly<{

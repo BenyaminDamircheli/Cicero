@@ -77,6 +77,7 @@ async def get_complaints():
         complaints = db.query(processor.Complaint).all()
         grouped_complaints = group_complaints(complaints)
         print(grouped_complaints[:5])
+        print(len(grouped_complaints))
         return grouped_complaints
     finally:
         db.close()
