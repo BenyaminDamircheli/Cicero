@@ -1,8 +1,9 @@
 import React from 'react'
 import { GroupedComplaint } from '../types';
-import { Info, Globe, BookOpen, Building2 } from 'lucide-react';
+import { Info, Globe, BookOpen, Building2, Hammer } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import SourcesSection from './sourcesSection';
+import SidebarSection from './sidebarSection';
 
 const RevolvingMap = dynamic(() => import('./revolvingMap'), { ssr: false });
 
@@ -30,26 +31,20 @@ const SidebarContent = ({ selectedComplaint }: SidebarContentProps) => {
       </section>
 
       <section className="mb-6">
-        <h3 className="text-md flex items-center font-semibold mb-2">
-            <Globe className="inline-block mr-2 w-[12px] h-[12px]" />
-            Summary
-        </h3>
-        <p className="text-sm text-gray-700">
-          Downtown Toronto, particularly around Yonge and Dundas Square, is facing significant challenges with homelessness, sanitation, and public safety issues such as drug use. The area has seen an increase in encampments and improper waste disposal, contributing to unsanitary conditions and health concerns. Public spaces are impacted by these issues, affecting overall livability and tourism in the city center.
-        </p>
+        <SidebarSection title='Summary' icon={Globe} content='Downtown Toronto, particularly around Yonge and Dundas Square, is facing significant challenges with homelessness, sanitation, and public safety issues such as drug use. The area has seen an increase in encampments and improper waste disposal, contributing to unsanitary conditions and health concerns. Public spaces are impacted by these issues, affecting overall livability and tourism in the city center.'/>
       </section>
 
       <section className="mb-6">
-        <h3 className="text-md flex items-center font-semibold mb-2">
-            <Info className="inline-block mr-2 w-[12px] h-[12px]" />
-            Urgency
-        </h3>
-        <p className="text-sm text-gray-700">
-          The combination of homelessness and poor sanitation poses an immediate risk to public health and safety, requiring swift intervention to address the living conditions of the homeless population and improve the cleanliness of public spaces.
-        </p>
+        <SidebarSection title='Urgency' icon={Globe} content="The combination of homelessness and poor sanitation poses an immediate risk to public health and safety, requiring swift intervention to address the living conditions of the homeless population and improve the cleanliness of public spaces." title="Urgency" icon={Info} />
       </section>
 
-      <SourcesSection sources={selectedComplaint.sources} title="Sources" icon={BookOpen} />
+      <section className="mb-6">
+        <SidebarSection sources={selectedComplaint.sources} title="Sources" icon={BookOpen} />
+      </section>
+
+      <section className="mb-6">
+        <SidebarSection title="Improvements" icon={Hammer} content='The city should implement a comprehensive plan to address the root causes of homelessness and improve sanitation in the area. This includes providing affordable housing, mental health support, and addiction treatment services. Additionally, regular cleanups and maintenance of public spaces should be implemented to ensure the area remains clean and safe for residents and visitors.' />
+      </section>
 
     </div>
   )
