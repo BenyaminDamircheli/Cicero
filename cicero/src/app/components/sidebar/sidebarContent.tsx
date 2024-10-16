@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { GroupedComplaint } from '../types';
 import { Info, Globe, BookOpen, Building2, Hammer } from 'lucide-react';
 import dynamic from 'next/dynamic';
@@ -13,6 +13,46 @@ interface SidebarContentProps {
 
 
 const SidebarContent = ({ selectedComplaint }: SidebarContentProps) => {
+  const [title, setTitle] = useState<string | null>(null);
+  const [summary, setSummary] = useState<string | null>(null);
+  const [urgencyNumber, setUrgencyNumber] = useState<number | null>(null);
+  const [urgencyExplanation, setUrgencyExplanation] = useState<string | null>(null);
+  const [improvements, setImprovements] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    setLoading(true);
+    if (selectedComplaint) {
+      fetchComplaintSummary();
+    } else {
+      setTitle(null);
+      setSummary(null);
+      setUrgencyNumber(null);
+      setUrgencyExplanation(null);
+      setImprovements(null);
+    }
+  }, [selectedComplaint]);
+
+
+  const fetchComplaintSummary = async () => {
+    setLoading(true);
+    console.log("Fetching complaint summary");
+    const response = await fetch('http://localhost:8000/api/complaints/summary', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(selectedComplaint),
+    });
+    const data = await response.json();
+    setTitle(data.title);
+    setSummary(data.summary);
+    setUrgencyNumber(data.urgency.score);
+    setUrgencyExplanation(data.urgency.explanation);
+    setImprovements(data.solutions);
+    setLoading(false);
+  };
+
   if (!selectedComplaint) {
     return (
         <div className="flex-grow flex items-center justify-center">
@@ -23,26 +63,51 @@ const SidebarContent = ({ selectedComplaint }: SidebarContentProps) => {
 
   return(
     <div className="pt-4">
+      {loading ? (
+        <div className="h-6 w-3/4 bg-gray-200 rounded animate-pulse mb-4"></div>
+      ) : (
+        <h1 className='text-lg font-bold mb-4 truncate'>{title}</h1>
+      )}
       <section className='mb-6 rounded-md overflow-hidden'>
         <div className='h-[200px]'>
           <RevolvingMap complaint={selectedComplaint} />
         </div>
       </section>
 
+      {/* Summary Section */}
       <section className="mb-6">
-        <SidebarSection title='Summary' icon={Globe} content='Downtown Toronto, particularly around Yonge and Dundas Square, is facing significant challenges with homelessness, sanitation, and public safety issues such as drug use. The area has seen an increase in encampments and improper waste disposal, contributing to unsanitary conditions and health concerns. Public spaces are impacted by these issues, affecting overall livability and tourism in the city center.'/>
+        {loading ? (
+          <div className="h-24 bg-gray-200 rounded animate-pulse"></div>
+        ) : (
+          <SidebarSection title='Summary' icon={Globe} content={summary}/>
+        )}
       </section>
 
+      {/* Urgency Section */}
       <section className="mb-6">
-        <SidebarSection title='Urgency' icon={Info} content="The combination of homelessness and poor sanitation poses an immediate risk to public health and safety, requiring swift intervention to address the living conditions of the homeless population and improve the cleanliness of public spaces." />
+        {loading ? (
+          <div className="h-20 bg-gray-200 rounded animate-pulse"></div>
+        ) : (
+          <SidebarSection title='Urgency' icon={Info} content={urgencyExplanation} urgency={urgencyNumber} />
+        )}
       </section>
 
+      {/* Sources Section */}
       <section className="mb-6">
-        <SidebarSection title="Sources" icon={BookOpen} sources={selectedComplaint.sources} />
+        {loading ? (
+          <div className="h-32 bg-gray-200 rounded animate-pulse"></div>
+        ) : (
+          <SidebarSection title="Sources" icon={BookOpen} sources={selectedComplaint.sources} />
+        )}
       </section>
 
+      {/* Improvements Section */}
       <section className="mb-6">
-        <SidebarSection title="Improvements" icon={Hammer} content='The city should implement a comprehensive plan to address the root causes of homelessness and improve sanitation in the area. This includes providing affordable housing, mental health support, and addiction treatment services. Additionally, regular cleanups and maintenance of public spaces should be implemented to ensure the area remains clean and safe for residents and visitors.' />
+        {loading ? (
+          <div className="h-24 bg-gray-200 rounded animate-pulse"></div>
+        ) : (
+          <SidebarSection title="Improvements" icon={Hammer} content={improvements} />
+        )}
       </section>
 
     </div>

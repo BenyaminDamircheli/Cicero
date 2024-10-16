@@ -4,16 +4,18 @@ import { Source } from '../types';
 import { SourceComponent } from './source';
 
 interface SidebarSectionProps {
-    title: string;
+    title: string | null;
     icon: React.ElementType;
-    content?: string;
+    content?: string | null;
     sources?: Source[];
+    urgency?: number | null;
+    loading?: boolean;
 }
 
-const SidebarSection = ({ title, icon, content, sources }: SidebarSectionProps) => {
+const SidebarSection = ({ title, icon, content, sources, urgency, loading }: SidebarSectionProps) => {
     const [isOpen, setIsOpen] = useState(true);
     
-    const toggleOpen = () => {
+    const toggleOpen = () => {  
         setIsOpen(!isOpen);
     };
 
@@ -33,6 +35,11 @@ const SidebarSection = ({ title, icon, content, sources }: SidebarSectionProps) 
                     {content && (
                         <p className="text-sm text-gray-700 mb-2">
                             {content}
+                        </p>
+                    )}
+                    {urgency && (
+                        <p className="text-sm text-gray-700 mb-2">
+                            Urgency: {urgency}
                         </p>
                     )}
                     {sources && (
