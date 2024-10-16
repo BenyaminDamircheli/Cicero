@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import List
+
 class Urgency(BaseModel):
     score:int
     explanation:str
