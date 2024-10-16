@@ -28,9 +28,6 @@ app.add_middleware(
 processor = Processor()
 SessionLocal = processor.SessionLocal
 
-
-
-
 def group_complaints(complaints):
     def group_key(complaint):
         return complaint.group
