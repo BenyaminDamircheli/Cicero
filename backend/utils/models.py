@@ -21,10 +21,6 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
 
-# makes sure tables are created if they don't exist.
-# doesnt change existing tables.
-Base.metadata.create_all(bind=engine)
-
 
 # This is the individual complaints
 class Complaint(Base):
@@ -38,7 +34,7 @@ class Complaint(Base):
     locations = Column(ARRAY(String))
     coordinates = Column(ARRAY(Float))
     topics = Column(ARRAY(Float))
-    group = Column(Integer)
+    group = Column(Integer, ForeignKey("complaint_summaries.id"))
 
     summary = relationship("ComplaintSummary", back_populates="complaints")
 
@@ -46,7 +42,6 @@ class Complaint(Base):
 class ComplaintSummary(Base):
     __tablename__ = "complaint_summaries"
     id = Column(Integer, primary_key=True, index=True)
-    group = Column(Integer, ForeignKey("complaints1.group"), unique=True)
     title = Column(String)
     summary = Column(String)
     urgency_description = Column(String)

@@ -77,7 +77,7 @@ const SidebarContent = ({ selectedComplaint }: SidebarContentProps) => {
       {/* Summary Section */}
       <section className="mb-6">
         {loading ? (
-          <div className="h-24 bg-gray-200 rounded animate-pulse"></div>
+          <div className="h-32 bg-gray-200 rounded animate-pulse"></div>
         ) : (
           <SidebarSection title='Summary' icon={Globe} content={summary}/>
         )}
@@ -86,7 +86,7 @@ const SidebarContent = ({ selectedComplaint }: SidebarContentProps) => {
       {/* Urgency Section */}
       <section className="mb-6">
         {loading ? (
-          <div className="h-20 bg-gray-200 rounded animate-pulse"></div>
+          <div className="h-32 bg-gray-200 rounded animate-pulse"></div>
         ) : (
           <SidebarSection title='Urgency' icon={Info} content={urgencyExplanation} urgency={urgencyNumber} />
         )}
@@ -104,7 +104,7 @@ const SidebarContent = ({ selectedComplaint }: SidebarContentProps) => {
       {/* Improvements Section */}
       <section className="mb-6">
         {loading ? (
-          <div className="h-24 bg-gray-200 rounded animate-pulse"></div>
+          <div className="h-32 bg-gray-200 rounded animate-pulse"></div>
         ) : (
           <SidebarSection title="Improvements" icon={Hammer} content={improvements} />
         )}

@@ -18,6 +18,7 @@ class Source(BaseModel):
 
 class GroupedComplaint(BaseModel):
     id:str
+    group:int
     coordinates:List[float]
     sources:List[Source]
 

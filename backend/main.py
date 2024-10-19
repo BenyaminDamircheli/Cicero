@@ -5,7 +5,8 @@ from dotenv import load_dotenv
 from utils.types import GroupedComplaint, Source
 from utils.group_complaints import group_complaints
 from utils.complaint_summary.complaint_summary import generate_complaint_summary
-from utils.data_saver import Complaint, SessionLocal
+from utils.data_saver import Complaint, SessionLocal, save_complaint_summary
+from utils.models import Base, engine
 
 load_dotenv()
 
@@ -19,6 +20,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# makes sure tables are created if they don't exist.
+# doesnt change existing tables.
+Base.metadata.create_all(bind=engine)
 
 @app.get("/")
 async def root():
@@ -39,6 +43,9 @@ async def get_complaints():
 async def get_complaint_summary(complaint: GroupedComplaint):
     print("Generating complaint summary")
     summary = generate_complaint_summary(complaint)
+    print("Saving complaint summary")
+    save_complaint_summary(complaint, summary)
+    print("Complaint summary saved")
     return summary
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 from tqdm import tqdm
 from sklearn.metrics.pairwise import cosine_similarity
-from models import SessionLocal, Complaint, ComplaintSummary
-
+from utils.models import SessionLocal, Complaint, ComplaintSummary
+from utils.types import GroupedComplaint
 def save_complaints(data):
     db = SessionLocal()
     grouped_data = group_complaints(data)
@@ -54,30 +54,27 @@ def group_complaints(processed_data, similarity_threshold=0.69):
         
     return [item for group in groups for item in group]
 
-
-def save_complaint_summary(data):
+def save_complaint_summary(complaint: GroupedComplaint, summary_data: dict):
     db = SessionLocal()
-
-    # don't redundantly save summaries. not sure if this is necessary however.
-    if summary_exists(data['group']):
-        return
-    
     try:
-        complaint_summary = ComplaintSummary(
-            group=data['group'],
-            title=data['title'],
-            summary=data['summary'],
-            urgency_description=data['urgency_description'],
-            urgency_score=data['urgency_score'],
-            solution=data['solution']
-        )
-        db.add(complaint_summary)
+        complaint_summary = db.query(ComplaintSummary).filter(ComplaintSummary.id == complaint.group).first()
+        if not complaint_summary:
+            complaint_summary = ComplaintSummary(id=complaint.group)
+            db.add(complaint_summary)
+        
+        complaint_summary.title = summary_data['title']
+        complaint_summary.summary = summary_data['summary']
+        complaint_summary.urgency_description = summary_data['urgency']['explanation']
+        complaint_summary.urgency_score = summary_data['urgency']['score']
+        complaint_summary.solution = summary_data['solutions']
+        
         db.commit()
+        return complaint_summary
     except Exception as e:
-        print(f"An error occurred: {e}")
+        db.rollback()
+        print(f"Error saving complaint summary: {e}")
     finally:
         db.close()
-
 
 def summary_exists(group):
     db = SessionLocal()
