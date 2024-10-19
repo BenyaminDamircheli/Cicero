@@ -20,3 +20,5 @@ class GroupedComplaint(BaseModel):
     id:str
     coordinates:List[float]
     sources:List[Source]
+
+

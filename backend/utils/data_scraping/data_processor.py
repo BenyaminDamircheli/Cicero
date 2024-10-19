@@ -24,36 +24,6 @@ class Processor:
     def __init__(self):
         load_dotenv()
 
-        self.db_user = os.environ.get("user", "postgres.zeaafwuqllrqcvytkhaf")
-        self.db_password = os.environ.get("password", "Benyamin2024!")
-        self.db_host = os.environ.get("host", "aws-0-us-west-1.pooler.supabase.com")
-        self.db_port = os.environ.get("port", "6543")
-        self.db_name = os.environ.get("dbname", "postgres")
-
-        self.DATABASE_URL = f"postgresql+psycopg2://{quote_plus(self.db_user)}:{quote_plus(self.db_password)}@{self.db_host}:{self.db_port}/{self.db_name}?sslmode=require"
-
-        self.engine = create_engine(self.DATABASE_URL, pool_pre_ping=True)
-        self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
-
-        self.Base = declarative_base()
-
-        class Complaint(self.Base):
-            __tablename__ = "complaints1"
-
-            id = Column(Integer, primary_key=True, index=True)
-            title = Column(String)
-            body = Column(String)
-            url = Column(String)
-            created_at = Column(Float)
-            is_complaint = Column(Boolean)
-            locations = Column(ARRAY(String))
-            coordinates = Column(ARRAY(Float))
-            topics = Column(ARRAY(Float))
-            group = Column(Integer)
-
-        self.Complaint = Complaint
-        self.Base.metadata.create_all(bind=self.engine)
-
         self.nlp_reddit = spacy.load("en_core_web_trf")
         self.nlp_website = spacy.load("en_core_web_sm")
 
@@ -75,10 +45,6 @@ class Processor:
         except:
             pass
         return None
-
-    def preprocess_text(self, text):
-        tokens = word_tokenize(text)
-        return [token for token in tokens if token.isalnum() and token not in self.stopwords]
 
     def process_text(self, text, nlp):
         if not isinstance(text, str):
@@ -102,26 +68,6 @@ class Processor:
             'coordinates': coordinates,
             'embeddings': embeddings
         }
-
-    def group_complaints(self, processed_data, similarity_threshold=0.69):
-        groups = []
-        
-        for item in tqdm(processed_data, desc="Grouping complaints"):
-            added_to_group = False
-            for group in groups:
-                if cosine_similarity([item['embeddings']], [group[0]['embeddings']])[0][0] >= similarity_threshold:
-                    group.append(item)
-                    added_to_group = True
-                    break
-            
-            if not added_to_group:
-                groups.append([item])
-        
-        for i, group in enumerate(groups):
-            for item in group:
-                item['group'] = i
-        
-        return [item for group in groups for item in group]
 
     def process_data_website(self, data):
         processed_data = []
@@ -178,40 +124,3 @@ class Processor:
             return processed_data
         except Exception as e:
             print(f"An error occurred: {e}")
-
-    def save_data(self, data):
-        db = self.SessionLocal()
-        grouped_data = self.group_complaints(data)
-        
-        try:
-            for item in tqdm(grouped_data, desc="Saving data"):
-                try:
-                    complaint = self.Complaint(
-                        title=item['title'],
-                        body=item['body'],
-                        url=item['url'],
-                        created_at=item['created_at'],
-                        is_complaint=item['is_complaint'],
-                        locations=item['locations'],
-                        coordinates=item['coordinates'],
-                        topics=item['embeddings'].tolist(),  
-                        group=item['group']
-                    )
-                    db.add(complaint)
-                except Exception as e:
-                    print(f"Error saving item: {e}")
-                    print(f"Problematic item: {item}")
-            db.commit()
-        except Exception as e:
-            print(f"An error occurred: {e}")
-        finally:
-            db.close()
-        
-        return grouped_data
-
-    def get_complaints(self):
-        db = self.SessionLocal()
-        try:
-            return db.query(self.Complaint).all()
-        finally:
-            db.close()

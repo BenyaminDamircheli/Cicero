@@ -1,3 +1,2 @@
 # Cicero
-
-# Cicero
+Cicero is a work in progress. It is a tool that is designed to help policy makers take citizen complaints and turn them into actionable government proposals using LLM agents. Given my own personal connection and the amount of data available for Toronto, it is the city chosen for this project.
