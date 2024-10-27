@@ -1,24 +1,15 @@
-import os
-from urllib.parse import quote_plus
-
 import nltk
 import numpy as np
 import spacy
 from dotenv import load_dotenv
 from nltk.corpus import stopwords
 from nltk.sentiment import SentimentIntensityAnalyzer
-from nltk.tokenize import word_tokenize
 from sentence_transformers import SentenceTransformer
-from sklearn.metrics.pairwise import cosine_similarity
-from sqlalchemy import create_engine, Column, Integer, String, Boolean, Float, JSON, ARRAY, update
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-from sumy.parsers.plaintext import PlaintextParser
-from sumy.nlp.tokenizers import Tokenizer
 from sumy.summarizers.lsa import LsaSummarizer
-from sklearn.cluster import DBSCAN
 from geopy.geocoders import Nominatim
 from tqdm import tqdm
+import re
+from .toronto_scraper import TorontoScraper
 
 class Processor:
     def __init__(self):
@@ -99,12 +90,22 @@ class Processor:
 
     def process_data_reddit(self, data):
         processed_data = []
+        import re
+
+        def extract_urls(text):
+            url_pattern = re.compile(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
+            return url_pattern.findall(text)
+        
         try:
             for item in tqdm(data, desc="Processing data"):
                 try:
                     full_text = f"{item['title']} {item['body']}"
                     analysis = self.process_text(full_text, self.nlp_reddit)
-                    
+                    if analysis['is_complaint'] and extract_urls(item['body']):
+                        scraper = TorontoScraper()
+                        for url in extract_urls(item['body']):
+                            item['body'] += scraper.crawl_website_toronto(url)
+
                     processed_item = {
                         'title': item['title'],
                         'body': item['body'],

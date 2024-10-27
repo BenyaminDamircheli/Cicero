@@ -6,7 +6,6 @@ import re
 import io
 from PyPDF2 import PdfReader
 from tqdm import tqdm
-from data_processor import Processor
 from collections import deque
 
 class TorontoScraper:
@@ -27,7 +26,6 @@ class TorontoScraper:
         path:str = self.get_path(url).lower()
         url:str = url.lower()
         return (
-            'city-government' in path and \
             any(keyword in path for keyword in self.path_focus) and \
             not any(keyword in url for keyword in ['ward-profiles'])
         )

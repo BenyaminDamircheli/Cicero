@@ -2,11 +2,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List
 from dotenv import load_dotenv
-from utils.types import GroupedComplaint, Source
-from utils.group_complaints import group_complaints
-from utils.complaint_summary.complaint_summary import generate_complaint_summary
-from utils.data_saver import Complaint, SessionLocal, save_complaint_summary
-from utils.models import Base, engine
+from schemas.complaint_types import GroupedComplaint, Source
+from services.group_complaints import group_complaints
+from services.complaint_summary import generate_complaint_summary
+from services.data_saver import Complaint, SessionLocal, save_complaint_summary
+from models.models import Base, engine
 
 load_dotenv()
 

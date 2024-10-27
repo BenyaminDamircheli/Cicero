@@ -1,8 +1,8 @@
 from openai import OpenAI
 from pydantic import BaseModel
 import json
-from utils.types import GroupedComplaint, Summary, Urgency
-from utils.data_saver import ComplaintSummary, save_complaint_summary, summary_exists, get_complaint_summary, SessionLocal
+from schemas.complaint_types import GroupedComplaint, Summary, Urgency
+from services.data_saver import ComplaintSummary, save_complaint_summary, summary_exists, get_complaint_summary, SessionLocal
 
 session = SessionLocal()
 

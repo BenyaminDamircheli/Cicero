@@ -1,6 +1,6 @@
-from utils.types import GroupedComplaint, Source
+from schemas.complaint_types import GroupedComplaint, Source
 from itertools import groupby
-from utils.models import SessionLocal, ComplaintSummary
+from models.models import SessionLocal, ComplaintSummary
 
 def group_complaints(complaints):
     def group_key(complaint):

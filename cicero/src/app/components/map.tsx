@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Map, { Source, Layer, Popup } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { GroupedComplaint } from './types';
+import { Loader, Loader2 } from 'lucide-react';
 
 interface MapComponentProps {
   onMarkerSelect: (complaint: GroupedComplaint | null) => void;
@@ -96,9 +97,9 @@ const MapComponent = ({ onMarkerSelect }: MapComponentProps) => {
         )}
       </Map>
       {isLoading && (
-        <div className="absolute top-4 right-4 flex gap-2 items-center justify-center bg-white p-2 rounded-md">
-          <p className="text-black">Loading complaints</p>
-          <div className="spinner"></div>
+        <div className="absolute top-4 right-4 text-xs flex gap-2 items-center justify-center bg-white p-2 rounded-md">
+          <p className="text-black">Loading</p>
+          <Loader2 className="animate-spin w-3 h-3" />
         </div>
       )}
     </div>

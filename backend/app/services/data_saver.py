@@ -1,13 +1,16 @@
 from tqdm import tqdm
 from sklearn.metrics.pairwise import cosine_similarity
-from utils.models import SessionLocal, Complaint, ComplaintSummary
-from utils.types import GroupedComplaint
+from models.models import SessionLocal, Complaint, ComplaintSummary, engine, Base
+from schemas.complaint_types import GroupedComplaint
+
 def save_complaints(data):
     db = SessionLocal()
     grouped_data = group_complaints(data)
     
     try:
         for item in tqdm(grouped_data, desc="Saving data"):
+            if not item['is_complaint'] and "askTO" in item['url']:
+                continue
             try:
                 complaint = Complaint(
                         title=item['title'],
