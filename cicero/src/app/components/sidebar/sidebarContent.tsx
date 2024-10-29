@@ -16,10 +16,9 @@ const SidebarContent = ({ selectedComplaint }: SidebarContentProps) => {
   const [title, setTitle] = useState<string | null>(null);
   const [summary, setSummary] = useState<string | null>(null);
   const [urgencyNumber, setUrgencyNumber] = useState<number | null>(null);
-  const [urgencyExplanation, setUrgencyExplanation] = useState<string | null>(null);
   const [improvements, setImprovements] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-
+  const [urgencyExplanation, setUrgencyExplanation] = useState<string | null>(null);
   useEffect(() => {
     setLoading(true);
     if (selectedComplaint) {
@@ -28,8 +27,8 @@ const SidebarContent = ({ selectedComplaint }: SidebarContentProps) => {
       setTitle(null);
       setSummary(null);
       setUrgencyNumber(null);
-      setUrgencyExplanation(null);
       setImprovements(null);
+      setUrgencyExplanation(null);
     }
   }, [selectedComplaint]);
 
@@ -48,8 +47,8 @@ const SidebarContent = ({ selectedComplaint }: SidebarContentProps) => {
     setTitle(data.title);
     setSummary(data.summary);
     setUrgencyNumber(data.urgency.score);
-    setUrgencyExplanation(data.urgency.explanation);
     setImprovements(data.solutions);
+    setUrgencyExplanation(data.urgency.explanation);
     setLoading(false);
   };
 
@@ -66,7 +65,7 @@ const SidebarContent = ({ selectedComplaint }: SidebarContentProps) => {
       {loading ? (
         <div className="h-6 w-3/4 bg-gray-200 rounded animate-pulse mb-4"></div>
       ) : (
-        <h1 className='text-lg font-bold mb-4 truncate'>{title}</h1>
+        <h1 className='text-lg font-bold mb-4 text-center'>{title}</h1>
       )}
       <section className='mb-6 rounded-md overflow-hidden'>
         <div className='h-[200px]'>
@@ -88,7 +87,7 @@ const SidebarContent = ({ selectedComplaint }: SidebarContentProps) => {
         {loading ? (
           <div className="h-32 bg-gray-200 rounded animate-pulse"></div>
         ) : (
-          <SidebarSection title='Urgency' icon={Info} content={urgencyExplanation} urgency={urgencyNumber} />
+          <SidebarSection title='Urgency' icon={Info} urgency={urgencyNumber} />
         )}
       </section>
 

@@ -38,9 +38,22 @@ const SidebarSection = ({ title, icon, content, sources, urgency, loading }: Sid
                         </p>
                     )}
                     {urgency && (
-                        <p className="text-sm text-gray-700 mb-2">
-                            Urgency: {urgency}
-                        </p>
+                        <div className="mb-2 mt-1">
+                            <div className="flex gap-1">
+                                {[1, 2, 3, 4, 5].map((level) => (
+                                    <div
+                                        key={level}
+                                        className={`h-2 w-full rounded-sm ${
+                                            level <= urgency ? 
+                                                urgency > 3 ? 'bg-red-500' : 
+                                                urgency > 2 ? 'bg-orange-500' : 
+                                                'bg-green-500'
+                                            : 'bg-gray-200'
+                                        }`}
+                                    />
+                                ))}
+                            </div>
+                        </div>
                     )}
                     {sources && (
                         <div className="grid grid-cols-2 gap-2">
