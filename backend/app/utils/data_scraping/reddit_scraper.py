@@ -2,6 +2,7 @@ import praw
 from tqdm import tqdm
 from utils.data_scraping.toronto_scraper import TorontoScraper
 import re
+import urllib.parse
 
 class RedditScraper:
     def __init__(self, subreddit, limit = 2300):
@@ -20,13 +21,20 @@ class RedditScraper:
 
         data = []
         for post in tqdm(posts, desc="Scraping Reddit"):
+            body = post.selftext
+            url = post.url
+            
+            # Determine if this is a link post
+            is_link_post = not post.is_self and not any(url.lower().endswith(ext) for ext in ['.jpeg', '.jpg', '.png', '.gif'])
+            
             data.append({
                 "title": post.title,
                 "score": post.score,
-                "body": post.selftext,
+                "body": body,
                 "created": post.created_utc,
                 "id": post.id,
-                "url": post.url,
+                "url": url,
+                "is_link_post": is_link_post
             })
 
         return data

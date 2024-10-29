@@ -92,19 +92,16 @@ class Processor:
         processed_data = []
         import re
 
-        def extract_urls(text):
-            url_pattern = re.compile(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
-            return url_pattern.findall(text)
+        # def extract_urls(text):
+        #     url_pattern = re.compile(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
+        #     return url_pattern.findall(text)
         
         try:
             for item in tqdm(data, desc="Processing data"):
                 try:
                     full_text = f"{item['title']} {item['body']}"
                     analysis = self.process_text(full_text, self.nlp_reddit)
-                    if analysis['is_complaint'] and extract_urls(item['body']):
-                        scraper = TorontoScraper()
-                        for url in extract_urls(item['body']):
-                            item['body'] += scraper.crawl_website_toronto(url)
+
 
                     processed_item = {
                         'title': item['title'],

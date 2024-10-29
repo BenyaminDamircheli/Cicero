@@ -3,7 +3,6 @@ from typing import List
 
 class Urgency(BaseModel):
     score:int
-    explanation:str
 
 class Summary(BaseModel):
     title:str

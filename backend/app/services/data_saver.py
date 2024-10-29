@@ -7,32 +7,51 @@ def save_complaints(data):
     db = SessionLocal()
     grouped_data = group_complaints(data)
     
+    # Debug print
+    print(f"Total items before filtering: {len(grouped_data)}")
+    filtered_complaints = [
+        item for item in grouped_data
+        if (item['is_complaint'] or "toRANTo" in item['url']) and (not any(ext in item['url'] for ext in ["jpg", "jpeg", "png", "gif"]) or "reddit.com" not in item['url'])
+    ]
+    print(f"Items after filtering: {len(filtered_complaints)}")
+
+
+    groups = set([item['group'] for item in filtered_complaints])
+
+    summaries = [
+        ComplaintSummary(
+            id=group,
+        )
+        for group in groups
+    ]
+
+    db.bulk_save_objects(summaries)
+    db.commit()
+    
     try:
-        for item in tqdm(grouped_data, desc="Saving data"):
-            if not item['is_complaint'] and "askTO" in item['url']:
-                continue
-            try:
-                complaint = Complaint(
-                        title=item['title'],
-                        body=item['body'],
-                        url=item['url'],
-                        created_at=item['created_at'],
-                        is_complaint=item['is_complaint'],
-                        locations=item['locations'],
-                        coordinates=item['coordinates'],
-                        topics=item['embeddings'].tolist(),  
-                        group=item['group'],
-                        summary=None
-                    )
-                db.add(complaint)
-            except Exception as e:
-                print(f"Error saving item: {e}")
-                print(f"Problematic item: {item}")
-            db.commit()
+        complaints = [
+            Complaint(
+                title=item['title'],
+                body=item['body'],
+                url=item['url'],
+                created_at=item['created_at'],
+                is_complaint=item['is_complaint'],
+                locations=item['locations'],
+                coordinates=item['coordinates'],
+                topics=item['embeddings'].tolist(),  
+                group=item['group'],
+                summary=None
+            )
+            for item in filtered_complaints
+        ]
+        db.bulk_save_objects(complaints)
+        db.commit()
+        print(f"Successfully saved {len(complaints)} complaints.")
     except Exception as e:
-        print(f"An error occurred: {e}")
+        db.rollback()
+        print(f"An error occurred during bulk saving: {e}")
     finally:
-            db.close()
+        db.close()
         
     return grouped_data
 
@@ -48,8 +67,8 @@ def group_complaints(processed_data, similarity_threshold=0.69):
                 added_to_group = True
                 break
             
-            if not added_to_group:
-                groups.append([item])
+        if not added_to_group:
+            groups.append([item])
         
     for i, group in enumerate(groups):
         for item in group:
@@ -81,14 +100,32 @@ def save_complaint_summary(complaint: GroupedComplaint, summary_data: dict):
 
 def summary_exists(group):
     db = SessionLocal()
-    query = db.query(ComplaintSummary).filter(ComplaintSummary.group == group).first()
-    return query is not None
+    try:
+        summary = db.query(ComplaintSummary).filter(ComplaintSummary.id == group).first()
+        return summary is not None and summary.title is not None
+    finally:
+        db.close()
 
 def get_complaint_summary(group):
     db = SessionLocal()
-    query = db.query(ComplaintSummary).filter(ComplaintSummary.group == group).first()
-    return query
-
+    try:
+        summary = db.query(ComplaintSummary).filter(ComplaintSummary.id == group).first()
+        if summary:
+            print("Summary found")
+            return {
+                "title": summary.title,
+                "summary": summary.summary,
+                "urgency": {
+                    "score": summary.urgency_score,
+                    "explanation": summary.urgency_description
+                },
+                "solutions": summary.solution
+            }
+        else:
+            print("No summary found")
+            return None
+    finally:
+        db.close()
 
 def get_complaints_by_group(group):
     db = SessionLocal()
@@ -99,3 +136,4 @@ def get_complaints():
     db = SessionLocal()
     query = db.query(Complaint).all()
     return query
+
