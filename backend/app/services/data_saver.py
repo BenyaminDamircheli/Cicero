@@ -7,11 +7,11 @@ def save_complaints(data):
     db = SessionLocal()
     grouped_data = group_complaints(data)
     
-    # Debug print
+    # filter out non-complaint data
     print(f"Total items before filtering: {len(grouped_data)}")
     filtered_complaints = [
         item for item in grouped_data
-        if (item['is_complaint'] or "toRANTo" in item['url']) and (not any(ext in item['url'] for ext in ["jpg", "jpeg", "png", "gif"]) or "reddit.com" not in item['url'])
+        if (item['is_complaint'] or "toRANTo" in item['url'] or "toronto.ca" in item['url']) and (not any(ext in item['url'] for ext in ["jpg", "jpeg", "png", "gif"]) or "reddit.com" not in item['url'])
     ]
     print(f"Items after filtering: {len(filtered_complaints)}")
 

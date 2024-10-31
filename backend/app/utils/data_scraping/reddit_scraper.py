@@ -24,7 +24,6 @@ class RedditScraper:
             body = post.selftext
             url = post.url
             
-            # Determine if this is a link post
             is_link_post = not post.is_self and not any(url.lower().endswith(ext) for ext in ['.jpeg', '.jpg', '.png', '.gif'])
             
             data.append({

@@ -44,7 +44,6 @@ class ComplaintSummary(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String)
     summary = Column(String)
-    urgency_description = Column(String)
     urgency_score = Column(Integer)
     solution = Column(String)
 

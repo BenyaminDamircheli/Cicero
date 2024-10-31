@@ -44,7 +44,7 @@ class Processor:
         doc = nlp(text)
         
         sentiment = self.sia.polarity_scores(text)
-        is_complaint = sentiment['compound'] < 0.00  # play with this a bit
+        is_complaint = sentiment['compound'] < -0.06  # play with this a bit
         
         locations = [ent.text for ent in doc.ents if ent.label_ in ["LOC", "FAC"] and ent.text.lower() not in ["toronto", "ontario", "canada"]]
         embeddings = self.sentence_model.encode(text)

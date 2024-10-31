@@ -5,7 +5,7 @@ import time
 
 class RedditLinkScraper:
     def __init__(self):
-        pass  # Remove self.data as we don't need to store state
+        pass  
 
     def get_domain(self, url):
         return urlparse(url).netloc
@@ -21,16 +21,13 @@ class RedditLinkScraper:
             domain = self.get_domain(url)
             soup = BeautifulSoup(response.text, 'html.parser')
 
-            # Extract text content
             text = " ".join([p.get_text() for p in soup.find_all('p')])
             
-            # Limit text length to 6000 characters (matching toronto_scraper.py)
             max_text_length = 6000
             text = text[:max_text_length] if len(text) > max_text_length else text
 
             print(f"Scraped link {url}")
             
-            # Return just the current item instead of accumulating in self.data
             return {
                 "url": url,
                 "reddit_url": reddit_url,

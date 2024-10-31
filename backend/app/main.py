@@ -41,12 +41,8 @@ async def get_complaints():
 
 @app.post("/api/complaints/summary")
 async def get_complaint_summary(complaint: GroupedComplaint):
-    print("Generating complaint summary")
     summary = generate_complaint_summary(complaint)
-    print(summary)
-    print("Saving complaint summary")
     save_complaint_summary(complaint, summary)
-    print("Complaint summary saved")
     return summary
 
 if __name__ == "__main__":

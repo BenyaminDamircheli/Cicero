@@ -23,14 +23,16 @@ def generate_complaint_summary(complaint: GroupedComplaint):
     {result}
 
     1. Provide a short title that best describes the complaints, emphasize the complaints keep it as short as possible.
-    2. Provide a short summary of the complaints (70 words max).
+    2. Provide a short summary of the complaints (90 words max).
     3. Assign an urgency score from 1-5 (5 is most urgent).
-    4. Propose a potential solution(s) to address the complaints, keep this short in paragraph form, no lists (30 words max).
+    4. Propose a potential solution(s) to address the complaints, keep this short in paragraph form, no lists (55 words max).
     """
+    print("Checking if summary already exists")
     # don't make api calls if the summary already exists
     if summary_exists(complaint.group):
-        print("Checking if summary already exists")
         return get_complaint_summary(complaint.group)
+    
+    print("Generating summary")
     
     try:
         response = client.beta.chat.completions.parse(
