@@ -8,7 +8,10 @@ from PyPDF2 import PdfReader
 from tqdm import tqdm
 from collections import deque
 
-class TorontoScraper:
+class TorontoScraper: 
+    """
+    Scrapes the Toronto government website for data
+    """
     def __init__(self, path_focus):
         self.url = None
         self.visited = set()

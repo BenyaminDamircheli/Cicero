@@ -12,6 +12,9 @@ import re
 from .toronto_scraper import TorontoScraper
 
 class Processor:
+    """
+    Processes data from the websites and Reddit to extract complaints and other metadata about the posts.
+    """
     def __init__(self):
         load_dotenv()
 
