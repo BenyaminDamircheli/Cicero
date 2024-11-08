@@ -86,11 +86,11 @@ def save_complaint_summary(complaint: GroupedComplaint, summary_data: dict):
         
         complaint_summary.title = summary_data['title']
         complaint_summary.summary = summary_data['summary']
-        complaint_summary.urgency_description = summary_data['urgency']['explanation']
         complaint_summary.urgency_score = summary_data['urgency']['score']
         complaint_summary.solution = summary_data['solutions']
         
         db.commit()
+        print(f"Successfully saved complaint summary for group {complaint.group}")
         return complaint_summary
     except Exception as e:
         db.rollback()
@@ -117,7 +117,6 @@ def get_complaint_summary(group):
                 "summary": summary.summary,
                 "urgency": {
                     "score": summary.urgency_score,
-                    "explanation": summary.urgency_description
                 },
                 "solutions": summary.solution
             }

@@ -15,5 +15,5 @@ def run_reddit_link_test():
     #NOTE for some reason costar.com and cbc.ca are not working for the scraper.
     for item in reddit_data:
         if "reddit" not in item['url'] and "redd" not in item['url'] and "costar.com" not in item['url'] and "cbc.ca" not in item['url'] and not is_image_url(item['url']):
-            data = reddit_link_scraper.scrape_link(item['url'])
+            data = reddit_link_scraper.scrape_link(item['url'], item['url'])
             print(data)

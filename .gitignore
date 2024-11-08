@@ -30,3 +30,5 @@ Thumbs.db
 *.egg-info/
 dist/
 build/
+
+backend/data/Zoning Area 4326.geojson
