@@ -15,6 +15,7 @@ import json
 from dotenv import load_dotenv
 import os
 from datetime import datetime
+from websocket_manager import manager
 load_dotenv()
 
 class State(TypedDict):
@@ -34,8 +35,8 @@ class State(TypedDict):
     research_feedback: str
 @dataclass
 class ProposalSupervisor:
-    def __init__(self, websocket: WebSocket = None):
-        self.websocket: WebSocket = websocket
+    def __init__(self, client_id: str):
+        self.client_id = client_id
         self.tavily_client = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
         self.llm = ChatOpenAI(model="gpt-4o-mini")
         self.zone_policy_researcher = PolicyResearcherAgent()
@@ -44,18 +45,19 @@ class ProposalSupervisor:
         self.zoning_checker = ZoningCheckerAgent()
         self.proposal_writer = ProposalWriterAgent()
     
-    async def emit_status(self, action: str, data: Any = None):
-        if self.websocket:
-            try:
-                message = {
-                    "type": action,
-                    "data": data,
-                    "timestamp": datetime.now().isoformat()
-                }
-                print(f"Emitting status: {message}")
-                await self.websocket.send_json(message)
-            except Exception as e:
-                print(f"Error emitting status: {e}")
+    async def emit_status(self, task_type: str, action: str, status: str, data: Any = None):
+        try:
+            message = {
+                "type": task_type,
+                "action": action,
+                "data": data,
+                "timestamp": datetime.now().isoformat(),
+                "status": status
+            }
+            print(f"Emitting status: {message}")
+            await manager.send_message(self.client_id, message)
+        except Exception as e:
+            print(f"Error emitting status: {e}")
 
 
     async def determine_research_path(self, state: State) -> State:
@@ -84,14 +86,14 @@ class ProposalSupervisor:
         Reply with either:
         "NEEDS_ZONING" or "NEEDS_WEB_RESEARCH"
         """
-        await self.emit_status("Determining Research Path")
+        await self.emit_status(task_type="init", action="Determining Research Path", status="pending")
         response = await self.llm.ainvoke([HumanMessage(content=prompt)])
 
         if "NEEDS_ZONING" in response.content:
             state["next_action"] = "check_zoning"
         else:
             state["next_action"] = "web_research"
-
+        await self.emit_status(task_type="update", action="Determining Research Path", status="success")
         print(f"Next action: {state['next_action']}")
 
         return state
@@ -103,10 +105,11 @@ class ProposalSupervisor:
         """
         Check zoning for the given coordinates.
         """
-        await self.emit_status("Checking Zoning")
+        await self.emit_status(task_type="init", action="Checking Zoning", status="pending")
         zoning_info = await self.zoning_checker.process(state["coordinates"])
         state["zoning_info"] = zoning_info
         state["next_action"] = "rank_pois"
+        await self.emit_status(task_type="update", action="Checking Zoning", status="success", data=zoning_info)
         print(f"Zoning info: {state['zoning_info']}")
         return state
     
@@ -114,13 +117,14 @@ class ProposalSupervisor:
         """
         Research zoning policies for the complaint location.
         """
-        await self.emit_status("Researching Zoning Policies")
+        await self.emit_status(task_type="init", action="Researching Zoning Policies", status="pending")
         policies = await self.zone_policy_researcher.process({
             "bylaw_section": state["zoning_info"]["bylaw_section"],
             "zone_type": state["zoning_info"]["zone_type"]
         })
         state["zoning_policies"] = policies
         state["next_action"] = "find_pois"
+        await self.emit_status(task_type="update", action="Researching Zoning Policies", status="success", data=policies)
         print(f"Zoning policies: {state['zoning_policies']}")
         return state
     
@@ -128,10 +132,11 @@ class ProposalSupervisor:
         """
         Find POIs near the given coordinates.
         """
-        await self.emit_status("Finding POIs")
+        await self.emit_status(task_type="init", action="Finding POIs", status="pending")
         pois = await self.poi_finder.process(state["location"], state["zoning_info"], state["summary"], state["solution_outline"])
         state["pois"] = pois
         state["next_action"] = "rank_pois"
+        await self.emit_status(task_type="update", action="Finding POIs", status="success", data=pois)
         print(f"POIs: {state['pois']}")
         return state
     
@@ -145,7 +150,7 @@ class ProposalSupervisor:
         })
         state["ranked_pois"] = ranked_pois["ranked_locations"]
         state["next_action"] = "create_research_plan"
-        await self.emit_status("POIs found", state["ranked_pois"])
+        await self.emit_status(task_type="update", action="POIs Found", status="success", data=state["ranked_pois"])
         print(f"Ranked POIs: {state['ranked_pois']}")
         return state
 
@@ -214,9 +219,9 @@ class ProposalSupervisor:
             - Toronto studies
             - Environmental impact
             """
-        await self.emit_status("Creating Research Plan")
+        await self.emit_status(task_type="init", action="Creating Research Plan", status="pending")
         response = await self.llm.ainvoke([
-            SystemMessage(content="You are a JSON-only response bot. Only output valid JSON."),
+            SystemMessage(content="You are a JSON ONLY response bot. ONLY output valid JSON."),
             HumanMessage(content=prompt)
         ])    
         try:
@@ -231,7 +236,7 @@ class ProposalSupervisor:
                     f"What are similar projects in {state['location']} Toronto"
                 ]
             }
-        await self.emit_status("Research Plan Created", state["research_plan"])
+        await self.emit_status(task_type="update", action="Research Plan Created", status="success", data=state["research_plan"])
         state["next_action"] = "conduct_research"
         print(f"Research plan: {state['research_plan']}")
         return state
@@ -245,6 +250,7 @@ class ProposalSupervisor:
         Conduct research based on the research plan.
         """
         research_results = state["research_results"]
+        await self.emit_status(task_type="init", action="Researching", status="pending")
         for query in state["research_plan"]["search_queries"]:
             print(f"\nProcessing query: {query}")
             results = self.tavily_client.search(query, include_answer=True, max_results=5)
@@ -257,7 +263,7 @@ class ProposalSupervisor:
             })
         
         state["research_results"] = research_results
-        await self.emit_status("Research Complete")
+        await self.emit_status(task_type="update", action="Researching", status="success")
         state["next_action"] = "evaluate_research"
         print(f"Research results: {research_results}")
         return state
@@ -294,9 +300,10 @@ class ProposalSupervisor:
         "NEEDS_MORE_RESEARCH" if additional research needed (specify gaps)
         """
         print(f"Asking LLM for evaluation")
+        await self.emit_status(task_type="init", action="Evaluating Research", status="pending")
         evaluation = await self.llm.ainvoke([HumanMessage(content=prompt)])
         print(f"LLM response: {evaluation.content}")
-        await self.emit_status("Evaluating Research")
+        await self.emit_status(task_type="update", action="Evaluating Research", status="success")
         if "needs_more_research" in evaluation.content.lower():
             state["next_action"] = "conduct_research"
         else:
@@ -312,10 +319,11 @@ class ProposalSupervisor:
         """
         Write a proposal using the research results.
         """
-        await self.emit_status("Writing Proposal")
+        await self.emit_status(task_type="init", action="Writing Proposal", status="pending")
         proposal = await self.proposal_writer.process(state)
         state["proposal"] = proposal
         state["next_action"] = "end"
+        await self.emit_status(task_type="update", action="Writing Proposal", status="success")
         return state
 
     async def web_research(self, state: State) -> State:
@@ -334,7 +342,7 @@ class ProposalSupervisor:
         ["query 1", "query 2", "query 3"]
         """
         
-        await self.emit_status("Starting Web Research")
+        await self.emit_status(task_type="init", action="Web Research", status="pending")
         response = await self.llm.ainvoke([
             SystemMessage(content="You are a JSON-only response bot. Only output valid JSON."),
             HumanMessage(content=prompt)
@@ -360,7 +368,7 @@ class ProposalSupervisor:
 
         state["research_results"] = research_results
         state["next_action"] = "evaluate_web_research"
-        await self.emit_status("Research Complete", queries)
+        await self.emit_status(task_type="update", action="Web Research", status="success", data=queries)
         return state
 
     async def evaluate_web_research(self, state: State) -> State:
@@ -385,7 +393,7 @@ class ProposalSupervisor:
         "COMPLETE" if research is sufficient
         "NEEDS_MORE_RESEARCH" if additional research needed
         """
-        await self.emit_status("Evaluating Research")
+        await self.emit_status(task_type="init", action="Evaluating Research", status="pending")
         evaluation = await self.llm.ainvoke([HumanMessage(content=prompt)])
         
         if "NEEDS_MORE_RESEARCH" in evaluation.content:
@@ -393,6 +401,8 @@ class ProposalSupervisor:
             state["next_action"] = "web_research"
         else:
             state["next_action"] = "write_proposal"
+
+        await self.emit_status(task_type="update", action="Evaluating Research", status="success")
         
         print(f"Next action: {state['next_action']}")
         

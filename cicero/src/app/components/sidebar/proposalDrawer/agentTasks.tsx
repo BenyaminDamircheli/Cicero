@@ -1,14 +1,15 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Loader2, CheckCircle2 } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
+import { useState, useEffect } from "react";
+import { Loader2, CheckCircle2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Task {
-  id: number
-  name: string
-  completed: boolean
-  details?: string[]
+  id: number;
+  type: string;
+  name: string;
+  completed: boolean;
+  details?: string[];
 }
 
 interface AIAgentTaskProps {
@@ -17,58 +18,60 @@ interface AIAgentTaskProps {
 }
 
 export default function AIAgentTask({ wsRef, clientId }: AIAgentTaskProps) {
-  const [tasks, setTasks] = useState<Task[]>([])
+  const [tasks, setTasks] = useState<Task[]>([]);
 
-  useEffect(() => {
-    const ws = wsRef.current
+
+    const ws = wsRef.current;
     if (!ws) {
-      console.error("WebSocket is not connected")
-      return
+      console.error("WebSocket is not connected");
+      return;
     }
 
-    console.log("WebSocket connected")
+    const handleMessage = (event: MessageEvent) => {
+      console.log("WebSocket message received:", event.data);
+      const data = JSON.parse(event.data);
+      const {type: taskType, action: taskName, status, details} = data;
+      setTasks((prev) => {
+        const existingTask = prev.find((t) => t.name === taskName);
 
-    ws.onmessage = (event) => {
-      console.log("WebSocket message received:", event.data)
-      const data = JSON.parse(event.data)
-      
-      setTasks(prev => {
-        const taskName = data.type
-        const existingTask = prev.find(t => t.name === taskName)
-        
         if (existingTask) {
-          return prev.map(t => 
-            t.name === taskName 
-              ? { 
-                  ...t, 
-                  completed: true,
-                  details: data.data ? (Array.isArray(data.data) ? data.data : [data.data]) : undefined
-                }
+          return prev.map((t) =>
+            t.name === taskName && taskType === "update"
+              ? { ...t, completed: status === "success", status, details }
               : t
-          )
+          );
+        } else {
+          return [
+            ...prev,
+            {
+              id: prev.length + 1,
+              type: "pending",
+              name: taskName,
+              completed: status === "success",
+              status,
+              details: details
+                ? Array.isArray(details)
+                  ? details
+                  : [details]
+                : undefined,
+            },
+          ];
         }
-        
-        return [...prev, {
-          id: prev.length + 1,
-          name: taskName,
-          completed: false,
-          details: data.data ? (Array.isArray(data.data) ? data.data : [data.data]) : undefined
-        }]
-      })
-    }
+      });
+    };
 
-    ws.onerror = (error) => {
-      console.error("WebSocket error:", error)
-    }
+    const handleError = (error: Event) => {
+      console.error("WebSocket error:", error);
+    };
 
-    return () => {
-      ws.onmessage = null
-      ws.onerror = null
-    }
-  }, [])
+    ws.addEventListener("message", handleMessage);
+    ws.addEventListener("error", handleError);
+
+
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 mb-5">
+      <h3 className="text-lg font-semibold">Agent Tasks</h3>
       <AnimatePresence>
         {tasks.map((task) => (
           <motion.div
@@ -84,13 +87,13 @@ export default function AIAgentTask({ wsRef, clientId }: AIAgentTaskProps) {
               ) : (
                 <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
               )}
-              <span className={task.completed ? 'text-gray-600' : 'text-blue-600'}>
+              <span className="text-gray-600 text-sm">
                 {task.name}
               </span>
             </div>
-            
+
             {task.details && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 className="ml-6 text-sm text-gray-500 space-y-1"
@@ -99,10 +102,10 @@ export default function AIAgentTask({ wsRef, clientId }: AIAgentTaskProps) {
                   <div key={i} className="flex items-center space-x-2">
                     <div className="w-1 h-1 rounded-full bg-gray-400" />
                     <span>
-                      {typeof detail === 'string' 
-                        ? detail 
-                        : (detail as {name?: string; type?: string}).name || 
-                          (detail as {name?: string; type?: string}).type}
+                      {typeof detail === "string"
+                        ? detail
+                        : (detail as { name?: string; type?: string }).name ||
+                          (detail as { name?: string; type?: string }).type}
                     </span>
                   </div>
                 ))}
@@ -112,5 +115,5 @@ export default function AIAgentTask({ wsRef, clientId }: AIAgentTaskProps) {
         ))}
       </AnimatePresence>
     </div>
-  )
+  );
 }

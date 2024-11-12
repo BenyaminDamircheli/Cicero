@@ -35,6 +35,8 @@ class POIRankerAgent(BaseAgent):
         print("asking llm for ranked pois")
 
         prompt = f"""
+        YOU CAN ONLY RESPOND IN JSON.
+
         You are a zoning expert for the City of Toronto. Analyze these locations for compatibility with the target zone.
         
         You are also a member of a team that is tasked with coming up with a municipal proposal for the city of Toronto. You are tackling the following issue:

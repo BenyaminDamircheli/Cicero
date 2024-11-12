@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { Libre_Baskerville } from "next/font/google";
 import { GroupedComplaint } from '../types';
 import SidebarContent from './sidebarContent';
@@ -22,6 +22,7 @@ const Sidebar = ({ selectedComplaint, onUpdateComplaint }: SidebarProps) => {
   const [summary, setSummary] = useState<string | null>(null);
   const [location, setLocation] = useState<string | null>(null);
   const [solutionOutline, setSolutionOutline] = useState<string | null>(null);
+  const clientId = useRef<string>(Math.random().toString(36).substring(7));
 
   const handleGenerateProposal = () => {
     setIsGenerating(true);

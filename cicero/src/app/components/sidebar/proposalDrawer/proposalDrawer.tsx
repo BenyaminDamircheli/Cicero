@@ -25,16 +25,14 @@ const ProposalDrawer = ({ isOpen, onClose, complaint, location, coordinates, sum
   const generateProposal = async () => {
     setIsLoading(true);
 
-    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-      wsRef.current = new WebSocket(`ws://localhost:8000/ws/proposal/${clientId.current}`);
+    wsRef.current = new WebSocket(`ws://localhost:8000/ws/proposal/${clientId.current}`);
 
-      wsRef.current.onopen = () => {
-        console.log("WebSocket connected in ProposalDrawer")
-      }
-
-      wsRef.current.onerror = (error) => {
-        console.error("WebSocket error in ProposalDrawer:", error)
-      }
+    wsRef.current.onopen = () => {
+      console.log("WebSocket connected in ProposalDrawer")
+      wsRef.current?.send("connected");
+    }
+    wsRef.current.onerror = (error) => {
+      console.error("WebSocket error in ProposalDrawer:", error)
     }
 
     try {
@@ -48,6 +46,7 @@ const ProposalDrawer = ({ isOpen, onClose, complaint, location, coordinates, sum
       const response = await fetch(`http://localhost:8000/api/proposals/generate/${clientId.current}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(proposalInput),
       });
       const data = await response.json();
@@ -81,21 +80,21 @@ const ProposalDrawer = ({ isOpen, onClose, complaint, location, coordinates, sum
         <AIAgentTask wsRef={wsRef} clientId={clientId.current} />
       </div>
       {!isLoading && proposal && (
-        <div className="flex flex-col gap-4">
-          <div className="text-md font-semibold text-neutral-600">
+        <div className="flex flex-col gap-6 bg-white rounded-lg shadow-sm">
+          <div className="text-base font-semibold text-neutral-800 pb-3">
             Written Proposal
           </div>
-          <div className="max-w-none prose">
+          <div className="max-w-none prose prose-neutral">
             <Markdown 
               remarkPlugins={[remarkGfm]}
               components={{
-                h1: ({node, ...props}) => <h1 className="text-xl font-bold mb-5" {...props}/>,
-                h2: ({node, ...props}) => <h2 className="text-xl font-bold mb-4" {...props}/>,
-                h3: ({node, ...props}) => <h3 className="text-lg font-bold mb-3" {...props}/>,
-                p: ({node, ...props}) => <p className="mb-4 leading-relaxed" {...props}/>,
-                ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-4" {...props}/>,
-                ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-4" {...props}/>,
-                li: ({node, ...props}) => <li className="mb-1" {...props}/>,
+                h1: ({node, ...props}) => <h1 className="text-xl font-bold mb-6 text-neutral-900" {...props}/>,
+                h2: ({node, ...props}) => <h2 className="text-lg font-bold mb-5 text-neutral-800" {...props}/>,
+                h3: ({node, ...props}) => <h3 className="text-base font-bold mb-4 text-neutral-700" {...props}/>,
+                p: ({node, ...props}) => <p className="mb-4 leading-7 text-neutral-600" {...props}/>,
+                ul: ({node, ...props}) => <ul className="list-disc pl-6 mb-4 space-y-2" {...props}/>,
+                ol: ({node, ...props}) => <ol className="list-decimal pl-6 mb-4 space-y-2" {...props}/>,
+                li: ({node, ...props}) => <li className="mb-1 text-neutral-600" {...props}/>,
               }}
             >
               {proposal}

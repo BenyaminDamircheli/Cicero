@@ -84,8 +84,8 @@ class ProposalWriterAgent(BaseAgent):
             9. References
 
             For the analysis of suggested locations, under each location you MUST HAVE the following sections:
-            - Location Name
-            - Location Description
+            - Location Address
+            - Location Description (with name of the location)
             - Zoning 
             - Plan (what you plan to do at each location)
             - Site Plan (more specifics of what you plan to do on the site)

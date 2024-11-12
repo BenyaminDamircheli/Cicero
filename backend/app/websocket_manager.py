@@ -17,6 +17,9 @@ class ConnectionManager:
 
     async def send_message(self, client_id: str, message: dict):
         if client_id in self.active_connections:
-            await self.active_connections[client_id].send_json(message)
+            try:
+                await self.active_connections[client_id].send_json(message)
+            except Exception as e:
+                print(f"Error sending message to {client_id}: {e}")
 
 manager = ConnectionManager()

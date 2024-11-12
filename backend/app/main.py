@@ -1,5 +1,7 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Response, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+import asyncio
+from fastapi import HTTPException
 from typing import List
 from dotenv import load_dotenv
 from schemas.complaint_types import GroupedComplaint, Source, ProposalInput
@@ -19,31 +21,50 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"]
 )
 
-# makes sure tables are created if they don't exist.
-# doesnt change existing tables.
+# ensures tables are created if they don't exist
 Base.metadata.create_all(bind=engine)
 
 @app.get("/")
 async def root():
     return {"message": "Welcome to the Complaints API"}
 
+@app.websocket("/ws/test/{client_id}")
+async def test_websocket(websocket: WebSocket, client_id: str):
+    await manager.connect(client_id, websocket)
+    try:
+        while True:
+            try:
+                data = await websocket.receive_text()
+                if data == "connected":
+                    print("WebSocket connected")
+            except WebSocketDisconnect:
+                manager.disconnect(client_id)
+    except WebSocketDisconnect:
+        manager.disconnect(client_id)
+
 @app.websocket("/ws/proposal/{client_id}")
 async def proposal_websocket(websocket: WebSocket, client_id: str):
     await manager.connect(client_id, websocket)
     try:
         while True:
-            await websocket.receive_text()
+            try:
+                data = await websocket.receive_text()
+                if data == "connected":
+                    print("WebSocket connected")
+            except WebSocketDisconnect:
+                manager.disconnect(client_id)
+                break
     except WebSocketDisconnect:
         manager.disconnect(client_id)
 
 @app.post("/api/proposals/generate/{client_id}")
 async def generate_proposal(complaint: ProposalInput, client_id: str):
-    websocket = manager.active_connections[client_id]
-    supervisor = ProposalSupervisor(websocket)
+    supervisor = ProposalSupervisor(client_id)
     graph = supervisor.create_graph()
-
+    
     state = State(
         location=complaint.location,
         coordinates=complaint.coordinates,
@@ -60,9 +81,9 @@ async def generate_proposal(complaint: ProposalInput, client_id: str):
         proposal={},
         research_feedback=""
     )
-    print(complaint.location, complaint.coordinates, complaint.summary, complaint.solution_outline)
-    print("Generating proposal")
+    print("Invoking graph")
     result = await graph.ainvoke(state)
+    
     return result
 
 @app.get("/api/complaints", response_model=List[GroupedComplaint])
