@@ -30,8 +30,11 @@ def group_complaints(complaints):
                 GroupedComplaint(
                     id = f'{summary.id}_{complaint.id}',
                     group = summary.id,
-                    coordinates= complaint.coordinates[0], 
-                    sources = sources
+                    coordinates = complaint.coordinates[0],
+                    sources = sources,
+                    location = complaint.locations[0],
+                    summary = summary.summary if summary.summary else "",
+                    solution_outline = summary.solution if summary.solution else ""
                 )
             )
 

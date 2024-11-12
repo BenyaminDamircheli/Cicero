@@ -1,6 +1,6 @@
 from shapely.geometry import shape, Point
 import geopandas as gpd
-from base_agent import BaseAgent
+from agents.base_agent import BaseAgent
 
 class ZoningCheckerAgent(BaseAgent):
     def __init__(self):
@@ -8,16 +8,19 @@ class ZoningCheckerAgent(BaseAgent):
         super().__init__(tools=[])
 
 
-    def process(self, location: list[float, float]) -> dict:
+    async def process(self, location: list[float, float]) -> dict:
+        print(f"Checking zoning for {location}")
         point = Point(location[1], location[0])
         for _, zone in self.zoning_data.iterrows():
             if shape(zone.geometry).contains(point):
+                print(f"Zoning found: {zone['ZN_ZONE']}")
                 return {
                     "zone_type": zone["ZN_ZONE"],
                     "bylaw_chapter": zone["ZBL_CHAPT"],
                     "bylaw_section": zone["ZBL_SECTN"],
                     "bylaw_exception": zone["ZBL_EXCPTN"],
                 }
+        print("No zoning found")
         return {
             "zone_type": "CR",
             "bylaw_chapter": "40",

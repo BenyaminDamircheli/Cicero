@@ -46,5 +46,6 @@ class ComplaintSummary(Base):
     summary = Column(String)
     urgency_score = Column(Integer)
     solution = Column(String)
+    location = Column(ARRAY(String))
 
     complaints = relationship("Complaint", back_populates="summary")

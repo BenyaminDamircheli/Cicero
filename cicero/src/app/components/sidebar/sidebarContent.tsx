@@ -9,16 +9,20 @@ const RevolvingMap = dynamic(() => import('./revolvingMap'), { ssr: false });
 
 interface SidebarContentProps {
     selectedComplaint: GroupedComplaint | null;
+    onSummaryChange: (summary: string | null) => void;
+    onLocationChange: (location: string | null) => void;
+    onSolutionOutlineChange: (outline: string | null) => void;
 }
 
 
-const SidebarContent = ({ selectedComplaint }: SidebarContentProps) => {
+const SidebarContent = ({ selectedComplaint, onSummaryChange, onLocationChange, onSolutionOutlineChange }: SidebarContentProps) => {
   const [title, setTitle] = useState<string | null>(null);
   const [summary, setSummary] = useState<string | null>(null);
   const [urgencyNumber, setUrgencyNumber] = useState<number | null>(null);
   const [improvements, setImprovements] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [urgencyExplanation, setUrgencyExplanation] = useState<string | null>(null);
+  const [location, setLocation] = useState<string | null>(null);
   useEffect(() => {
     setLoading(true);
     if (selectedComplaint) {
@@ -29,6 +33,9 @@ const SidebarContent = ({ selectedComplaint }: SidebarContentProps) => {
       setUrgencyNumber(null);
       setImprovements(null);
       setUrgencyExplanation(null);
+      onSummaryChange(null);
+      onLocationChange(null);
+      onSolutionOutlineChange(null);
     }
   }, [selectedComplaint]);
 
@@ -50,6 +57,9 @@ const SidebarContent = ({ selectedComplaint }: SidebarContentProps) => {
     setImprovements(data.solutions);
     setUrgencyExplanation(data.urgency.explanation);
     setLoading(false);
+    onSummaryChange(data.summary);
+    onLocationChange(selectedComplaint?.location || null);
+    onSolutionOutlineChange(data.solutions);
   };
 
   if (!selectedComplaint) {

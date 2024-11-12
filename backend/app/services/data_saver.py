@@ -84,10 +84,21 @@ def save_complaint_summary(complaint: GroupedComplaint, summary_data: dict):
             complaint_summary = ComplaintSummary(id=complaint.group)
             db.add(complaint_summary)
         
+        # Get all complaints in this group
+        complaints_in_group = db.query(Complaint).filter(Complaint.group == complaint.group).all()
+        
+        # Find first complaint with a location
+        location = None
+        for c in complaints_in_group:
+            if c.locations and len(c.locations) > 0:
+                location = c.locations
+                break
+        
         complaint_summary.title = summary_data['title']
         complaint_summary.summary = summary_data['summary']
         complaint_summary.urgency_score = summary_data['urgency']['score']
         complaint_summary.solution = summary_data['solutions']
+        complaint_summary.location = location
         
         db.commit()
         print(f"Successfully saved complaint summary for group {complaint.group}")
@@ -118,7 +129,8 @@ def get_complaint_summary(group):
                 "urgency": {
                     "score": summary.urgency_score,
                 },
-                "solutions": summary.solution
+                "solutions": summary.solution,
+                "location": summary.location,
             }
         else:
             print("No summary found")

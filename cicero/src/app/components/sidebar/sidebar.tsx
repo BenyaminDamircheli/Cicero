@@ -14,10 +14,14 @@ const libreBaskerville = Libre_Baskerville({
 
 interface SidebarProps {
   selectedComplaint: GroupedComplaint | null;
+  onUpdateComplaint: (complaint: GroupedComplaint) => void;
 }
 
-const Sidebar = ({ selectedComplaint }: SidebarProps) => {
+const Sidebar = ({ selectedComplaint, onUpdateComplaint }: SidebarProps) => {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [summary, setSummary] = useState<string | null>(null);
+  const [location, setLocation] = useState<string | null>(null);
+  const [solutionOutline, setSolutionOutline] = useState<string | null>(null);
 
   const handleGenerateProposal = () => {
     setIsGenerating(true);
@@ -29,7 +33,12 @@ const Sidebar = ({ selectedComplaint }: SidebarProps) => {
         <div className="p-4 overflow-y-auto max-h-full">
           <h1 className={`text-3xl text-center font-bold mb-2 ${libreBaskerville.className}`}>Cicero</h1>
           <p className="text-center text-xs text-gray-500">Tool for turning citizen complaints into actionable government proposals</p>
-          <SidebarContent selectedComplaint={selectedComplaint} />
+          <SidebarContent 
+            selectedComplaint={selectedComplaint}
+            onSummaryChange={setSummary}
+            onLocationChange={setLocation}
+            onSolutionOutlineChange={setSolutionOutline}
+          />
         </div>
 
         {selectedComplaint && <section className='mt-auto p-4'>
@@ -49,6 +58,10 @@ const Sidebar = ({ selectedComplaint }: SidebarProps) => {
       <ProposalDrawer 
         isOpen={isGenerating} 
         onClose={() => setIsGenerating(false)}
+        location={location || ''}
+        coordinates={selectedComplaint?.coordinates || [41.8781, -79.6298]}
+        summary={summary || ''}
+        solution_outline={solutionOutline || ''}
         complaint={selectedComplaint}
       />
     </div>

@@ -1,34 +1,26 @@
-from langchain_core.tools import Tool
-from base_agent import BaseAgent
+from agents.base_agent import BaseAgent
 import os
-from langchain_google_community.places_api import GooglePlacesAPIWrapper
+import requests
 from dotenv import load_dotenv
 from geopy.geocoders import Nominatim
 from typing import Dict, List
-import asyncio
 
 load_dotenv()
-
-api_key = os.getenv("GPLACES_API_KEY")
 
 class POIFinderAgent(BaseAgent):
     """
     Finds nearby POIs based on a given location.
     """
     def __init__(self):
-        places = GooglePlacesAPIWrapper(gplaces_api_key=api_key, top_k_results=10)
         self.geolocator = Nominatim(user_agent="cicero")
-        tools = [
-            Tool(
-                name="Find POIs",
-                func=places.run,
-                description="Use this tool to find nearby POIs based a set of coordinates."
-            )
-        ]
-        super().__init__(tools=tools)
+        super().__init__(tools=[])
 
     def _get_coordinates(self, address: str) -> tuple[float, float] | None:
+        """
+        Get the coordinates of a given address.
+        """
         try:
+            print(f"Getting coordinates for {address}")
             location = self.geolocator.geocode(address)
             if location:
                 return [location.latitude, location.longitude]
@@ -37,28 +29,80 @@ class POIFinderAgent(BaseAgent):
             print(f"Error getting coordinates for {address}: {e}")
             return None
 
-    def _structure_pois(self, pois:str) -> Dict[str, List[Dict]]:
-        structured = []
-        for poi in pois.split('\n\n\n'):
-            lines = poi.split('\n')
-            if len(lines) < 2:
-                continue
-
-            name = lines[0].strip('1234567890. ')
-            address = lines[1].replace('Address: ', '')
-            coords = self._get_coordinates(name)
-
-            structured.append({
-                'name': name,
-                'address': address,
-                'coordinates': coords
-            })
-
-        return structured
+    def text_search(self, query, **kwargs):
+        url = "https://places.googleapis.com/v1/places:searchText"
         
-    async def process(self, location: str) -> Dict[str, List[Dict]]:
-        query = f"Streets around {location} Toronto Canada"
-        pois = await self.ainvoke_tool("Find POIs", query)
-        structured_pois = self._structure_pois(pois)
-        return {'points_of_interest': structured_pois}
+        headers = {
+            "Content-Type": "application/json",
+            "X-Goog-Api-Key": os.getenv("GPLACES_API_KEY"),
+            "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.location,places.types"  
+        }
+        
+        data = {
+            "textQuery": query,
+            **kwargs
+        }
+        
+        response = requests.post(url, headers=headers, json=data)
+        return response.json()
+
+
+    def _structure_places(self, places: Dict) -> List[Dict]:
+        structured = []
+        for place in places.get('places', []):
+            structured.append({
+                'name': place['displayName']['text'],
+                'address': place['formattedAddress'],
+                'coordinates': [
+                    place['location']['latitude'],
+                    place['location']['longitude']
+                ],
+                'type': place['types']
+            })
+        return structured
+
+    async def process(self, location: str, zoning_info: Dict, summary: str, solution_outline: str) -> Dict[str, List[Dict]]:
+        """
+        Process the location to find nearby POIs.
+        """
+        coords = self._get_coordinates(f"{location}, Toronto, Canada")
+        if not coords:
+            return []
+
+        prompt = f"""
+        You are a member of a team that is tasked with coming up with a municipal proposal for the city of Toronto. You are tackling the following issue:
+
+        Create a search query for Google Places API to find relevant locations near {location} in Toronto Canada.
+        The query should focus on finding public spaces, community centers, parks,etc. You should write a query that will find any locations that would be suitable for the following:
+        
+        Summary: {summary}
+
+        Solution Outline: {solution_outline}
+
+        Zoning Info: {zoning_info}
+
+        Example Query: "Parks around {location} Toronto Canada". In your query, only have one type of location (eg public spaces, parks, etc).
+        Return only the query text.
+        """
+        query = await self.llm.ainvoke(prompt)
+        print(f"Query for poi finder: {query.content}")
+        
+        places = self.text_search(
+            query.content,
+            # Optional parameters
+            locationBias={
+                "circle": {
+                    "center": {
+                        "latitude": coords[0],
+                        "longitude": coords[1]
+                    },
+                    "radius": 5000.0
+                }
+            },
+            maxResultCount=10
+        )
+        print(f"Places: {places}")
+        structured_places = self._structure_places(places)
+        print(f"Structured Places: {structured_places}")
+        return structured_places
 

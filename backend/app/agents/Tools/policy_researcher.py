@@ -22,7 +22,11 @@ class PolicyResearcherAgent(BaseAgent):
 
 
     def scrape_toronto_zoning_bylaws(self, chapter_number: str) -> str:
+        """
+        Scrape the Toronto Zoning Bylaws for a specific zoning bylaw chapter.
+        """
         try:
+            print(f"Scraping Toronto Zoning Bylaws for chapter {chapter_number}")
             chapter_parts = chapter_number.split('.')
             formatted_chapter = '_'.join(chapter_parts)
 
@@ -49,6 +53,9 @@ class PolicyResearcherAgent(BaseAgent):
             return f"Error scraping Toronto Zoning Bylaws: {e}"
     
     async def process(self, context: dict) -> dict:
+        """
+        Process the context to extract the key policies and restrictions from the zoning bylaw text.
+        """
         zone_section = context.get("bylaw_section")
         zone_type = context.get("zone_type")
         if not zone_section:
@@ -67,9 +74,9 @@ class PolicyResearcherAgent(BaseAgent):
         
         Summarize the most important regulations in a clear, concise format.
         """
-
+        print(f"Asking LLM for policies")
         response = await self.llm.ainvoke(prompt)
-
+        print(f"LLM response: {response.content}")
         split_section = zone_section.split('.')
         formatted_section = '_'.join(split_section)
         url = f"{self.base_url}/ZBL_NewProvision_Section{formatted_section}.htm"
@@ -77,6 +84,6 @@ class PolicyResearcherAgent(BaseAgent):
         return {
             "zone_type": zone_type,
             "bylaw_section": formatted_section,
-            "policies": response,
+            "policies": response.content,
             "source": url
         }

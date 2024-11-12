@@ -16,9 +16,16 @@ class Source(BaseModel):
     body:str
 
 class GroupedComplaint(BaseModel):
-    id:str
-    group:int
+    id: str
+    group: int
+    coordinates: List[float]
+    sources: List[Source]
+    location: str
+    summary: str
+    solution_outline: str
+
+class ProposalInput(BaseModel):
+    location:str
     coordinates:List[float]
-    sources:List[Source]
-
-
+    summary:str
+    solution_outline:str
