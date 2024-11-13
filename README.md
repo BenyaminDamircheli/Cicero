@@ -1,6 +1,6 @@
 # Cicero
 
-Cicero is a proof of concept for how LLM agents can be used by governments and urban planners to turn citizen complaints into actionable proposals. 
+Cicero is a proof of concept for how LLM agents can be used by governments and urban planners to turn citizen complaints into actionable government proposals that can be used to create safer and healthier communities. 
 
 Check it out in action [here](https://www.youtube.com/watch?v=NLCgRhxzia4)
 
