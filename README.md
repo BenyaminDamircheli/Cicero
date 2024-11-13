@@ -63,4 +63,4 @@ You will have to run the scraping script to populate the database (which you sho
 
 ## Final Thoughts
 
-This project taught me a lot about webscraping, data processing with NLP libraries and how to coordinate LLM agents with LangGraph and LangChain. I'm sure there are many ways this project could be improved, especially with the agent architecture (I think the design is overly complex) but I'm happy with how it turned out and I learned a lot in the process.
+This project taught me a lot about webscraping, data processing with NLP libraries and how to coordinate LLM agents with LangGraph and LangChain. I'm sure there are many ways this project could be improved, especially with the agent architecture. I think it can be designed better and the agents can be given more autonomy, however, I think this would require building out more specific tools for each agent using esoteric government data which I do not have access to. But I'm happy with how it turned out and I learned a lot in the process.
