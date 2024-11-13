@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Building2, X } from 'lucide-react';
+import { Building2, FileText, X } from 'lucide-react';
 import { ProposalInput, GroupedComplaint } from '../../types';
 import AIAgentTask from './agentTasks';
 import ProposalVisualization from './proposalVisualization';
@@ -20,7 +20,7 @@ const ProposalDrawer = ({ isOpen, onClose, complaint, location, coordinates, sum
   const [proposal, setProposal] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
-  const clientId = useRef(Math.random().toString(36).substring(7));
+  const clientId = useRef(Math.random().toString(36).substring(7)); // unique client id for the websocket
 
   const generateProposal = async () => {
     setIsLoading(true);
@@ -60,6 +60,10 @@ const ProposalDrawer = ({ isOpen, onClose, complaint, location, coordinates, sum
   useEffect(() => {
     if (isOpen && complaint) {
       generateProposal();
+    } else if (!complaint) {
+      setProposal(null);
+      setIsLoading(false);
+      wsRef.current?.close();
     }
     return () => {
       wsRef.current?.close();
@@ -70,8 +74,8 @@ const ProposalDrawer = ({ isOpen, onClose, complaint, location, coordinates, sum
 
   return (
     <div className="w-[400px] bg-white h-full rounded-md shadow-md border-l-2 border-neutral-200 p-6 relative overflow-y-auto">
-      <div className='flex items-center justify-between mb-4'>
-        <h1 className='text-lg font-semibold'>Proposal</h1>
+      <div className='flex items-center justify-between mb-2'>
+        <h1 className='text-base font-semibold'></h1>
         <button onClick={onClose}>
           <X className="w-4 h-4" />
         </button>
@@ -80,8 +84,9 @@ const ProposalDrawer = ({ isOpen, onClose, complaint, location, coordinates, sum
         <AIAgentTask wsRef={wsRef} clientId={clientId.current} />
       </div>
       {!isLoading && proposal && (
-        <div className="flex flex-col gap-6 bg-white rounded-lg shadow-sm">
-          <div className="text-base font-semibold text-neutral-800 pb-3">
+        <div className="flex flex-col gap-6 bg-white rounded-lg shadow-sm mt-4 mb-4">
+          <div className="text-base font-semibold text-neutral-800 pb-3 flex items-center gap-2">
+            <FileText className="w-4 h-4" />
             Written Proposal
           </div>
           <div className="max-w-none prose prose-neutral">
