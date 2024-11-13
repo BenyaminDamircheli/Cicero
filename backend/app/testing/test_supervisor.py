@@ -6,7 +6,6 @@ from backend.app.agents.research_supervisor import ProposalSupervisor, State
 import asyncio
 
 async def test_supervisor():
-    # Create test state
     test_state = State(
         location="Niagara",
         coordinates=[43.6532, -79.3832],

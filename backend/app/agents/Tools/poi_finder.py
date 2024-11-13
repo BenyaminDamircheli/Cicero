@@ -66,14 +66,12 @@ class POIFinderAgent(BaseAgent):
         Process the location to find nearby POIs.
         """
         coords = self._get_coordinates(f"{location}, Toronto, Canada")
-        if not coords:
-            return []
 
         prompt = f"""
         You are a member of a team that is tasked with coming up with a municipal proposal for the city of Toronto. You are tackling the following issue:
 
         Create a search query for Google Places API to find relevant locations near {location} in Toronto Canada.
-        The query should focus on finding public spaces, community centers, parks,etc. You should write a query that will find any locations that would be suitable for the following:
+        The query should focus on finding public spaces, community centers, parks,etc. You should write a query that will find any locations that would be suitable for the following, however, keep your query general and not too specific so that locations can be found:
         
         Summary: {summary}
 
@@ -81,11 +79,15 @@ class POIFinderAgent(BaseAgent):
 
         Zoning Info: {zoning_info}
 
-        Example Query: "Parks around {location} Toronto Canada". In your query, only have one type of location (eg public spaces, parks, etc).
-        Return only the query text.
+        In your query, only have one type of location (eg public spaces, parks, etc).
+        Return only the query text. AND YOU MUST RETURN A QUERY IN ENGLISH WORDS PLEASE, YOU ARE NOT MAKING AN API CALL.
         """
-        query = await self.llm.ainvoke(prompt)
-        print(f"Query for poi finder: {query.content}")
+        try:
+            query = await self.llm.ainvoke(prompt)
+            print(f"Query for poi finder: {query.content}")
+        except Exception as e:
+            print(f"Error getting query for poi finder: {e}")
+            return []
         
         places = self.text_search(
             query.content,
@@ -93,8 +95,8 @@ class POIFinderAgent(BaseAgent):
             locationBias={
                 "circle": {
                     "center": {
-                        "latitude": coords[0],
-                        "longitude": coords[1]
+                        "latitude": coords[0] if coords else 49.2827,
+                        "longitude": coords[1] if coords else -79.1207
                     },
                     "radius": 5000.0
                 }

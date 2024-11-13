@@ -31,6 +31,7 @@ Base.metadata.create_all(bind=engine)
 async def root():
     return {"message": "Welcome to the Complaints API"}
 
+# Websocket for testing
 @app.websocket("/ws/test/{client_id}")
 async def test_websocket(websocket: WebSocket, client_id: str):
     await manager.connect(client_id, websocket)
@@ -45,6 +46,7 @@ async def test_websocket(websocket: WebSocket, client_id: str):
     except WebSocketDisconnect:
         manager.disconnect(client_id)
 
+# websocket for live research updates
 @app.websocket("/ws/proposal/{client_id}")
 async def proposal_websocket(websocket: WebSocket, client_id: str):
     await manager.connect(client_id, websocket)

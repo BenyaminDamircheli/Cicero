@@ -18,6 +18,7 @@ from datetime import datetime
 from websocket_manager import manager
 load_dotenv()
 
+# state for the graph
 class State(TypedDict):
     location: Annotated[str, "location"]  
     coordinates: List[float]
@@ -33,6 +34,7 @@ class State(TypedDict):
     research_plan: Dict[str, Any]
     proposal: Dict[str, Any]
     research_feedback: str
+
 @dataclass
 class ProposalSupervisor:
     def __init__(self, client_id: str):
@@ -65,7 +67,6 @@ class ProposalSupervisor:
         print(f"Summary: {state['summary'][:100]}...")
         print(f"Solution: {state['solution_outline'][:100]}...")
         print(f"Location: {state['location']}")
-        print(state)
         """
         Determine whether zoning research is required.
         """
@@ -110,7 +111,6 @@ class ProposalSupervisor:
         state["zoning_info"] = zoning_info
         state["next_action"] = "rank_pois"
         await self.emit_status(task_type="update", action="Checking Zoning", status="success", data=zoning_info)
-        print(f"Zoning info: {state['zoning_info']}")
         return state
     
     async def research_zoning_policies(self, state: State) -> State:
@@ -124,8 +124,7 @@ class ProposalSupervisor:
         })
         state["zoning_policies"] = policies
         state["next_action"] = "find_pois"
-        await self.emit_status(task_type="update", action="Researching Zoning Policies", status="success", data=policies)
-        print(f"Zoning policies: {state['zoning_policies']}")
+        await self.emit_status(task_type="update", action="Researching Zoning Policies", status="success")
         return state
     
     async def find_pois(self, state: State) -> State:
@@ -134,9 +133,17 @@ class ProposalSupervisor:
         """
         await self.emit_status(task_type="init", action="Finding POIs", status="pending")
         pois = await self.poi_finder.process(state["location"], state["zoning_info"], state["summary"], state["solution_outline"])
+        if not pois:
+            print("No POIs found, retrying with default search")
+            pois = await self.poi_finder.process(
+                state["location"], 
+                state["zoning_info"], 
+                state["summary"], 
+                state["solution_outline"],
+            )
+
         state["pois"] = pois
         state["next_action"] = "rank_pois"
-        await self.emit_status(task_type="update", action="Finding POIs", status="success", data=pois)
         print(f"POIs: {state['pois']}")
         return state
     
@@ -144,13 +151,14 @@ class ProposalSupervisor:
         """
         Rank POIs based on zoning compatibility.
         """
+        pois = state["pois"]
         ranked_pois = await self.poi_ranker.process({
             "zoning_info": state["zoning_info"],
             "points_of_interest": state["pois"]
         })
         state["ranked_pois"] = ranked_pois["ranked_locations"]
         state["next_action"] = "create_research_plan"
-        await self.emit_status(task_type="update", action="POIs Found", status="success", data=state["ranked_pois"])
+        await self.emit_status(task_type="update", action="Finding POIs", status="success", data=pois)
         print(f"Ranked POIs: {state['ranked_pois']}")
         return state
 
@@ -236,8 +244,9 @@ class ProposalSupervisor:
                     f"What are similar projects in {state['location']} Toronto"
                 ]
             }
-        await self.emit_status(task_type="update", action="Research Plan Created", status="success", data=state["research_plan"])
+        await self.emit_status(task_type="update", action="Creating Research Plan", status="success", data=state["research_plan"])
         state["next_action"] = "conduct_research"
+        await self.emit_status(task_type="init", action="Researching", status="pending")
         print(f"Research plan: {state['research_plan']}")
         return state
 
@@ -250,7 +259,6 @@ class ProposalSupervisor:
         Conduct research based on the research plan.
         """
         research_results = state["research_results"]
-        await self.emit_status(task_type="init", action="Researching", status="pending")
         for query in state["research_plan"]["search_queries"]:
             print(f"\nProcessing query: {query}")
             results = self.tavily_client.search(query, include_answer=True, max_results=5)
@@ -265,7 +273,6 @@ class ProposalSupervisor:
         state["research_results"] = research_results
         await self.emit_status(task_type="update", action="Researching", status="success")
         state["next_action"] = "evaluate_research"
-        print(f"Research results: {research_results}")
         return state
     
     async def evaluate_research(self, state: State) -> State:
@@ -300,10 +307,9 @@ class ProposalSupervisor:
         "NEEDS_MORE_RESEARCH" if additional research needed (specify gaps)
         """
         print(f"Asking LLM for evaluation")
-        await self.emit_status(task_type="init", action="Evaluating Research", status="pending")
+        await self.emit_status(task_type="init", action="Analyzing Research", status="pending")
         evaluation = await self.llm.ainvoke([HumanMessage(content=prompt)])
-        print(f"LLM response: {evaluation.content}")
-        await self.emit_status(task_type="update", action="Evaluating Research", status="success")
+        await self.emit_status(task_type="update", action="Analyzing Research", status="success")
         if "needs_more_research" in evaluation.content.lower():
             state["next_action"] = "conduct_research"
         else:

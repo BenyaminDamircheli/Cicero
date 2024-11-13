@@ -2,8 +2,11 @@ from fastapi import WebSocket
 from typing import Dict
 
 class ConnectionManager:
+    """
+    Manages WebSocket connections.
+    """
     def __init__(self):
-        self.active_connections: Dict[str, WebSocket] = {}
+        self.active_connections: Dict[str, WebSocket] = {} # dictionary of client ids and their websocket connections
 
     async def connect(self, client_id: str, websocket: WebSocket):
         await websocket.accept()

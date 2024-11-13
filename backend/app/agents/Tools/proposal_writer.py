@@ -81,7 +81,7 @@ class ProposalWriterAgent(BaseAgent):
             6. Methodology
             7. Timeline
             8. Budget
-            9. References
+            9. References (include links to the sources if applicable)
 
             For the analysis of suggested locations, under each location you MUST HAVE the following sections:
             - Location Address
@@ -124,7 +124,7 @@ class ProposalWriterAgent(BaseAgent):
             5. Methodology
             6. Timeline
             7. Budget
-            8. References
+            8. References (include links to the sources if applicable)
 
             Format as a structured document with clear sections. Focus on actionable solutions that address the core issues raised in the complaints.
             """

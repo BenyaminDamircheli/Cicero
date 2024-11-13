@@ -21,10 +21,9 @@ def text_search(query, **kwargs):
     response = requests.post(url, headers=headers, json=data)
     return response.json()
 
-# Example usage:
+# Example usage
 results = text_search(
-    "public spaces near Niagara Toronto Canada",
-    # Optional parameters
+    "points of interest around grace/bloor Toronto",
     locationBias={
         "circle": {
             "center": {
