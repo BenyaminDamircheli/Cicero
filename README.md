@@ -4,7 +4,7 @@ Cicero is a proof of concept for how LLM agents can be used by governments and u
 
 Check it out in action [here](https://www.youtube.com/watch?v=NLCgRhxzia4)
 
-Before building the agents, I first had to scrape 10k+ posts from online forums, government polls and online news articles. Then I used NLP techniques to extract relevant information such as location, sentiment and what issues are related to eachother in order to aggregate a list of 1k+ issues in Toronto.
+Before building the agents, I first had to scrape 10k+ posts from online forums, government polls and online news articles. Then I used NLP techniques to extract relevant information such as location, sentiment and what complaints are related to eachother in order to aggregate a list of 1k+ issues in Toronto.
 
 I visualized this data using a mapbox and a sidebar that shows the complaint details, sources and improvements.
 
