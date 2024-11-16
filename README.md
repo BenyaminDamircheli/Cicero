@@ -10,12 +10,11 @@ I visualized this data using a mapbox and a sidebar that shows the complaint det
 
 Langgraph was used to build the agent graph that coordinates multiple specialized agents:
 
-- **POI Finder**: Identifies relevant points of interest near complaint locations
-- **Zoning Checker**: Verifies zoning regulations and bylaws
-- **Policy Researcher**: Analyzes relevant municipal policies
+- **POI Finder**: Identifies relevant points of interest near complaint locations relevant to the issue and the solution
+- **Policy Researcher**: Analyzes relevant municipal policies at the location and each POI
 - **Web Researcher**: Gathers data from trusted sources about similar issues/solutions
-- **POI Ranker**: Ranks potential locations based on suitability
-- **Proposal Writer**: Generates formal municipal proposals
+- **POI Ranker**: Ranks potential locations based on suitability and gives an explanation of why.
+- **Proposal Writer**: Generates formal municipal proposal in markdown.
 
 The agents work together through a supervisor that manages the research and writing workflow.
 
@@ -24,7 +23,7 @@ The agents work together through a supervisor that manages the research and writ
 - **Frontend**: Next.js, TailwindCSS, Framer Motion
 - **Backend**: FastAPI, LangGraph, SQLAlchemy
 - **Database**: PostgreSQL (Supabase)
-- **ML/NLP**: spaCy, NLTK, sentence transformers(for embeddings which cluster complaints)
+- **ML/NLP**: spaCy, NLTK, sentence transformers (for embeddings which cluster complaints)
 - **Data Sources**: Reddit API, Toronto Open Data, Web Scraping
 
 
